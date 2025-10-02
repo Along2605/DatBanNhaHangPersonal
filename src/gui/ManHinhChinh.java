@@ -43,7 +43,7 @@ public class ManHinhChinh extends JFrame {
         lblNewLabel.setSize(new Dimension(60, 60));
         lblNewLabel.setBackground(new Color(214, 116, 76, 180));
         lblNewLabel.setOpaque(true);
-        ImageIcon icon = new ImageIcon("C:\\S1(2025-2016)\\PTUD\\QuanLyNhaHang\\img\\logo_nhahang.png");
+        ImageIcon icon = new ImageIcon("C:\\S1(2025-2016)\\PTUD\\DatBanNhaHang\\img\\logo_nhahang.png");
         Image img = icon.getImage().getScaledInstance(lblNewLabel.getWidth(), lblNewLabel.getHeight(), Image.SCALE_SMOOTH);
         lblNewLabel.setIcon(new ImageIcon(img));
         menuBar.add(lblNewLabel);
@@ -200,7 +200,7 @@ public class ManHinhChinh extends JFrame {
 
         // Thêm JLabel chứa ảnh nền
         JLabel lblBackground = new JLabel();
-        ImageIcon bgIcon = new ImageIcon("C:\\S1(2025-2016)\\PTUD\\QuanLyNhaHang\\img\\thiet-ke-nha-hang-han-quoc.jpg");
+        ImageIcon bgIcon = new ImageIcon("C:\\S1(2025-2016)\\PTUD\\DatBanNhaHang\\img\\thiet-ke-nha-hang-han-quoc.jpg");
         Image bgImage = bgIcon.getImage().getScaledInstance(800, 500, Image.SCALE_SMOOTH); // Scale to frame size
         lblBackground.setIcon(new ImageIcon(bgImage));
         lblBackground.setHorizontalAlignment(JLabel.CENTER); // Center the image
