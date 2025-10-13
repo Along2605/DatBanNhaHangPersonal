@@ -9,7 +9,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.event.*;
 import javax.swing.border.MatteBorder;
 
-public class ManHinhThucDon extends JFrame {
+public class ManHinhThucDon extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
@@ -87,7 +87,6 @@ public class ManHinhThucDon extends JFrame {
     private JLabel[] lblMonAnKem_tenHanQuoc = new JLabel[7];
     private JLabel[] lblMonAnKem_thanhPhan = new JLabel[7];
 
-   
     private static class DishData {
         String name;
         String koreanName;
@@ -160,7 +159,14 @@ public class ManHinhThucDon extends JFrame {
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
-                ManHinhThucDon frame = new ManHinhThucDon();
+                JFrame frame = new JFrame("Quản Lý Nhà Hàng");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                frame.setBounds(0, 0, screenSize.width, screenSize.height);
+                frame.setLocationRelativeTo(null);
+                
+                ManHinhThucDon panel = new ManHinhThucDon();
+                frame.add(panel, BorderLayout.CENTER);
                 frame.setVisible(true);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -169,18 +175,14 @@ public class ManHinhThucDon extends JFrame {
     }
 
     public ManHinhThucDon() {
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setBounds(100, 10, 1200, 700);
-        setTitle("Quản Lý Nhà Hàng");
-
-        getContentPane().setLayout(new BorderLayout());
+        // Thiết lập layout cho panel
+        setLayout(new BorderLayout());
 
         menuBar = new JMenuBar();
         menuBar.setBorder(new LineBorder(new Color(0, 0, 0)));
         menuBar.setBackground(new Color(214, 116, 76, 255));
         menuBar.setLayout(new FlowLayout(FlowLayout.LEFT));
-        setJMenuBar(menuBar);
+        add(menuBar, BorderLayout.NORTH);
 
         JLabel lblNewLabel = new JLabel("");
         lblNewLabel.setSize(new Dimension(60, 60));
@@ -204,7 +206,7 @@ public class ManHinhThucDon extends JFrame {
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         contentPane.setBackground(new Color(245, 245, 245));
         contentPane.setLayout(new BorderLayout());
-        getContentPane().add(contentPane, BorderLayout.CENTER);
+        add(contentPane, BorderLayout.CENTER);
 
         panelCenter = new JPanel();
         panelCenter.setPreferredSize(new Dimension(800, 600));
@@ -384,16 +386,16 @@ public class ManHinhThucDon extends JFrame {
         lblGiaTongTienSanPham_1.setBounds(600, 28, 126, 22);
         panel.add(lblGiaTongTienSanPham_1);
 
-        JButton btHuy = new JButton("Hủy");
-        btHuy.addActionListener(new ActionListener() {
+        JButton btnHuy = new JButton("Hủy");
+        btnHuy.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
             }
         });
-        btHuy.setForeground(Color.WHITE);
-        btHuy.setBackground(Color.BLACK);
-        btHuy.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        btHuy.setBounds(476, 69, 96, 49);
-        panel.add(btHuy);
+        btnHuy.setForeground(Color.WHITE);
+        btnHuy.setBackground(Color.BLACK);
+        btnHuy.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        btnHuy.setBounds(476, 69, 96, 49);
+        panel.add(btnHuy);
 
         btnThanhToan = new JButton("Thanh toán");
         btnThanhToan.addActionListener(new ActionListener() {
@@ -414,14 +416,16 @@ public class ManHinhThucDon extends JFrame {
         contentPane.add(panelEast, BorderLayout.CENTER);
         panelEast.setLayout(null);
 
+        int eastWidth = Toolkit.getDefaultToolkit().getScreenSize().width - 800 - 15; // Ước tính chiều rộng của panelEast
+
         panelEastTop = new JPanel();
-        panelEastTop.setBounds(35, 11, 299, 90);
+        panelEastTop.setBounds(35, 11, eastWidth - 70, 90);
         panelEast.add(panelEastTop);
         panelEastTop.setLayout(null);
 
         lblDanhSachDatMon = new JLabel("Danh sách đặt món");
         lblDanhSachDatMon.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblDanhSachDatMon.setBounds(10, 37, 180, 25);
+        lblDanhSachDatMon.setBounds(50, 37, 180, 25);
         panelEastTop.add(lblDanhSachDatMon);
 
         JComboBox<String> comboBan = new JComboBox<>();
@@ -430,20 +434,20 @@ public class ManHinhThucDon extends JFrame {
         }
         comboBan.setBackground(Color.WHITE);
         comboBan.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0, 0, 0, 80)));
-        comboBan.setBounds(187, 37, 102, 30);
+        comboBan.setBounds(260, 37, 200, 30);
         panelEastTop.add(comboBan);
 
         ButtonGroup group = new ButtonGroup();
 
         JRadioButton rdbtnAnTaiBan = new JRadioButton("Ăn tại bàn");
         rdbtnAnTaiBan.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        rdbtnAnTaiBan.setBounds(138, 7, 80, 20);
+        rdbtnAnTaiBan.setBounds(300, 7, 100, 20);
         panelEastTop.add(rdbtnAnTaiBan);
         group.add(rdbtnAnTaiBan);
 
         rdbtMangDi = new JRadioButton("Mang đi");
         rdbtMangDi.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        rdbtMangDi.setBounds(220, 7, 80, 20);
+        rdbtMangDi.setBounds(400, 7, 80, 20);
         panelEastTop.add(rdbtMangDi);
         group.add(rdbtMangDi);
 
@@ -451,22 +455,25 @@ public class ManHinhThucDon extends JFrame {
         panelEastCenter.setBorder(null);
         panelEastCenter.setBackground(Color.WHITE);
         panelEastCenter.setLayout(null);
-        panelEastCenter.setPreferredSize(new Dimension(354, 66 * 7));
+        panelEastCenter.setPreferredSize(new Dimension(eastWidth - 40, 70 * 7));
 
         JScrollPane eastCenterScrollPane = new JScrollPane(panelEastCenter);
-        eastCenterScrollPane.setBounds(10, 104, 364, 317);
+        eastCenterScrollPane.setBounds(10, 104, eastWidth - 20, 360);
         eastCenterScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         eastCenterScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         panelEast.add(eastCenterScrollPane);
 
         for (int i = 1; i <= 7; i++) {
-            initializeOrderedLine(i);
+            initializeOrderedLine(i, eastWidth);
         }
 
-        JPanel panel_2 = new JPanel();
-        panel_2.setBounds(10, 432, 354, 157);
-        panelEast.add(panel_2);
-        panel_2.setLayout(null);
+        JPanel panelEastBottom = new JPanel();
+        panelEastBottom.setBounds(10, 470, eastWidth - 20, 180);
+        panelEast.add(panelEastBottom);
+        panelEastBottom.setLayout(null);
+
+        int buttonWidth = 131;
+        int gap = (eastWidth - 20 - 2 * buttonWidth) / 3;
 
         JButton btnInBillChoBep = new JButton("In bill cho bếp");
         btnInBillChoBep.setBackground(new Color(255, 255, 255));
@@ -477,8 +484,8 @@ public class ManHinhThucDon extends JFrame {
         btnInBillChoBep.setIcon(new ImageIcon(imgDauBep));
         btnInBillChoBep.setHorizontalTextPosition(SwingConstants.CENTER);
         btnInBillChoBep.setVerticalTextPosition(SwingConstants.BOTTOM);
-        btnInBillChoBep.setBounds(43, 11, 131, 75);
-        panel_2.add(btnInBillChoBep);
+        btnInBillChoBep.setBounds(10 + gap, 11, buttonWidth, 75);
+        panelEastBottom.add(btnInBillChoBep);
 
         btnXuatHoaDon = new JButton("Xuất hóa đơn");
         btnXuatHoaDon.setBackground(new Color(255, 255, 255));
@@ -490,21 +497,21 @@ public class ManHinhThucDon extends JFrame {
         btnXuatHoaDon.setHorizontalTextPosition(SwingConstants.CENTER);
         btnXuatHoaDon.setVerticalTextPosition(SwingConstants.BOTTOM);
         btnXuatHoaDon.setIconTextGap(5);
-        btnXuatHoaDon.setBounds(197, 11, 131, 75);
-        panel_2.add(btnXuatHoaDon);
+        btnXuatHoaDon.setBounds(10 + gap + buttonWidth + gap, 11, buttonWidth, 75);
+        panelEastBottom.add(btnXuatHoaDon);
 
         btnXoaTatCaMon = new JButton("Xóa tất cả món");
         btnXoaTatCaMon.setBackground(new Color(192, 192, 192));
         btnXoaTatCaMon.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnXoaTatCaMon.setBounds(43, 97, 131, 38);
-        panel_2.add(btnXoaTatCaMon);
+        btnXoaTatCaMon.setBounds(10 + gap, 97, buttonWidth, 38);
+        panelEastBottom.add(btnXoaTatCaMon);
 
         btnLuuHoaDon = new JButton("Lưu hóa đơn");
         btnLuuHoaDon.setBackground(new Color(0, 128, 255));
         btnLuuHoaDon.setForeground(new Color(255, 255, 255));
         btnLuuHoaDon.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnLuuHoaDon.setBounds(197, 97, 131, 38);
-        panel_2.add(btnLuuHoaDon);
+        btnLuuHoaDon.setBounds(10 + gap + buttonWidth + gap, 97, buttonWidth, 38);
+        panelEastBottom.add(btnLuuHoaDon);
 
         btnDanhSachMonAn_MonAnChinh.addActionListener(e -> scrollPane.setViewportView(panelCenterCenter));
         btnDanhSachMonAn_DoUong.addActionListener(e -> scrollPane.setViewportView(panelDoUong));
@@ -774,10 +781,10 @@ public class ManHinhThucDon extends JFrame {
         }
     }
 
-    private void initializeOrderedLine(int idx) {
+    private void initializeOrderedLine(int idx, int eastWidth) {
         panelEastCenter_Line[idx] = new JPanel();
         panelEastCenter_Line[idx].setBorder(new MatteBorder(0, 0, 1, 0, new Color(0, 0, 0, 120)));
-        panelEastCenter_Line[idx].setBounds(0, (idx - 1) * 66 + 11, 344, 66);
+        panelEastCenter_Line[idx].setBounds(0, (idx - 1) * 66 + 11, eastWidth - 40, 66);
         panelEastCenter.add(panelEastCenter_Line[idx]);
         panelEastCenter_Line[idx].setLayout(null);
 
@@ -787,7 +794,7 @@ public class ManHinhThucDon extends JFrame {
         lblDanhSachDatMon_Mon_TieuDe[idx].setPreferredSize(new Dimension(100, 48));
         lblDanhSachDatMon_Mon_TieuDe[idx].setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblDanhSachDatMon_Mon_TieuDe[idx].setAlignmentX(0.0f);
-        lblDanhSachDatMon_Mon_TieuDe[idx].setBounds(0, 11, 102, 25);
+        lblDanhSachDatMon_Mon_TieuDe[idx].setBounds(10, 11, 200, 25);
         panelEastCenter_Line[idx].add(lblDanhSachDatMon_Mon_TieuDe[idx]);
 
         lblDanhSachDatMon_Mon_Gia[idx] = new JLabel(data.price);
@@ -796,14 +803,16 @@ public class ManHinhThucDon extends JFrame {
         lblDanhSachDatMon_Mon_Gia[idx].setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblDanhSachDatMon_Mon_Gia[idx].setBackground(new Color(64, 0, 0));
         lblDanhSachDatMon_Mon_Gia[idx].setForeground(new Color(0, 0, 0, 180));
-        lblDanhSachDatMon_Mon_Gia[idx].setBounds(49, 37, 62, 18);
+        lblDanhSachDatMon_Mon_Gia[idx].setBounds(-20, 37, 100, 18);
         panelEastCenter_Line[idx].add(lblDanhSachDatMon_Mon_Gia[idx]);
 
+        int lineWidth = eastWidth - 40;
+        int qtyX = lineWidth / 3;
         lblDanhSachMonAn_Mon_SoLuong[idx] = new JLabel(orderedQuantities[idx]);
         lblDanhSachMonAn_Mon_SoLuong[idx].setHorizontalAlignment(SwingConstants.CENTER);
         lblDanhSachMonAn_Mon_SoLuong[idx].setBorder(new LineBorder(new Color(0, 0, 0)));
         lblDanhSachMonAn_Mon_SoLuong[idx].setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblDanhSachMonAn_Mon_SoLuong[idx].setBounds(122, 11, 30, 44);
+        lblDanhSachMonAn_Mon_SoLuong[idx].setBounds(qtyX, 11, 30, 44);
         panelEastCenter_Line[idx].add(lblDanhSachMonAn_Mon_SoLuong[idx]);
 
         btnDanhSachMonAn_Mon_Cong[idx] = new JButton("");
@@ -811,7 +820,7 @@ public class ManHinhThucDon extends JFrame {
         btnDanhSachMonAn_Mon_Cong[idx].setMinimumSize(new Dimension(41, 27));
         btnDanhSachMonAn_Mon_Cong[idx].setMaximumSize(new Dimension(41, 27));
         btnDanhSachMonAn_Mon_Cong[idx].setPreferredSize(new Dimension(41, 27));
-        btnDanhSachMonAn_Mon_Cong[idx].setBounds(149, 11, 30, 25);
+        btnDanhSachMonAn_Mon_Cong[idx].setBounds(qtyX + 30, 11, 30, 25);
         panelEastCenter_Line[idx].add(btnDanhSachMonAn_Mon_Cong[idx]);
         ImageIcon iconAdd = new ImageIcon("img\\thucdon\\add_icon.png");
         Image imgAdd = iconAdd.getImage().getScaledInstance(btnDanhSachMonAn_Mon_Cong[idx].getWidth(), btnDanhSachMonAn_Mon_Cong[idx].getHeight(), Image.SCALE_SMOOTH);
@@ -822,23 +831,24 @@ public class ManHinhThucDon extends JFrame {
         btnDanhSachMonAn_Mon_Tru[idx].setMinimumSize(new Dimension(41, 27));
         btnDanhSachMonAn_Mon_Tru[idx].setMaximumSize(new Dimension(41, 27));
         btnDanhSachMonAn_Mon_Tru[idx].setPreferredSize(new Dimension(41, 27));
-        btnDanhSachMonAn_Mon_Tru[idx].setBounds(149, 36, 30, 19);
+        btnDanhSachMonAn_Mon_Tru[idx].setBounds(qtyX + 30, 36, 30, 19);
         panelEastCenter_Line[idx].add(btnDanhSachMonAn_Mon_Tru[idx]);
         ImageIcon iconMinus = new ImageIcon("img\\thucdon\\minus_icon.png");
         Image imgMinus = iconMinus.getImage().getScaledInstance(btnDanhSachMonAn_Mon_Tru[idx].getWidth(), btnDanhSachMonAn_Mon_Tru[idx].getHeight(), Image.SCALE_SMOOTH);
         btnDanhSachMonAn_Mon_Tru[idx].setIcon(new ImageIcon(imgMinus));
 
+        int totalX = qtyX * 2;
         lblDanhSachDatMon_Mon_GiaTong[idx] = new JLabel(orderedTotalPrices[idx]);
         lblDanhSachDatMon_Mon_GiaTong[idx].setPreferredSize(new Dimension(40, 30));
         lblDanhSachDatMon_Mon_GiaTong[idx].setHorizontalAlignment(SwingConstants.CENTER);
-        lblDanhSachDatMon_Mon_GiaTong[idx].setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblDanhSachDatMon_Mon_GiaTong[idx].setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblDanhSachDatMon_Mon_GiaTong[idx].setBorder(null);
         lblDanhSachDatMon_Mon_GiaTong[idx].setBackground(new Color(64, 0, 0));
-        lblDanhSachDatMon_Mon_GiaTong[idx].setBounds(211, 20, 91, 27);
+        lblDanhSachDatMon_Mon_GiaTong[idx].setBounds(totalX-40, 20, 150, 27);
         panelEastCenter_Line[idx].add(lblDanhSachDatMon_Mon_GiaTong[idx]);
 
         btnImgThungRacIcon_Mon[idx] = new JButton("");
-        btnImgThungRacIcon_Mon[idx].setBounds(304, 15, 30, 33);
+        btnImgThungRacIcon_Mon[idx].setBounds(lineWidth - 50, 15, 30, 33);
         btnImgThungRacIcon_Mon[idx].setOpaque(true);
         ImageIcon iconThungRac = new ImageIcon("img\\thucdon\\thung_rac_icon.png");
         Image imgThungRac = iconThungRac.getImage().getScaledInstance(btnImgThungRacIcon_Mon[idx].getWidth(), btnImgThungRacIcon_Mon[idx].getHeight(), Image.SCALE_SMOOTH);
@@ -850,7 +860,6 @@ public class ManHinhThucDon extends JFrame {
         
     }
 
- 
     private static class MenuBuilderQuanLy {
         private final Font menuFont = new Font("Segoe UI", Font.BOLD, 14);
         private final Font menuItemFont = new Font("Segoe UI", Font.PLAIN, 13);
