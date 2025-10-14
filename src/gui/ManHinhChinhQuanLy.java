@@ -68,7 +68,10 @@ public class ManHinhChinhQuanLy extends JFrame {
             }
         });
         setTitle("Quản Lý Nhà Hàng");
+<<<<<<< HEAD
         setExtendedState(JFrame.MAXIMIZED_BOTH);
+=======
+>>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
 
         // Thiết lập layout cho toàn bộ frame
         getContentPane().setLayout(new BorderLayout());
@@ -88,7 +91,11 @@ public class ManHinhChinhQuanLy extends JFrame {
         menuBar = new JMenuBar();
         menuBar.setBorder(new LineBorder(new Color(0, 0, 0)));
         menuBar.setBackground(new Color(214, 116, 76, 255));
+<<<<<<< HEAD
         menuBar.setLayout(new BoxLayout(menuBar, BoxLayout.X_AXIS));
+=======
+        menuBar.setLayout(new FlowLayout(FlowLayout.LEFT));
+>>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
         setJMenuBar(menuBar);
 
         // Add logo
@@ -104,14 +111,22 @@ public class ManHinhChinhQuanLy extends JFrame {
 
         // Use MenuBuilder to create menus
         MenuBuilderQuanLy menuBuilder = new MenuBuilderQuanLy();
+<<<<<<< HEAD
         menuBar.add(menuBuilder.createTrangChu());
+=======
+        menuBar.add(menuBuilder.createHeThongMenu());
+>>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
         menuBar.add(menuBuilder.createMonAnMenu());
         menuBar.add(menuBuilder.createKhuVucMenu());
         menuBar.add(menuBuilder.createCaLamMenu());
         menuBar.add(menuBuilder.createNhanVienMenu());
         menuBar.add(menuBuilder.createDoanhThuMenu());
+<<<<<<< HEAD
         menuBar.add(Box.createHorizontalGlue()); //đẩy các componet ra cuối
         menuBar.add(menuBuilder.createTaiKhoanMenu());
+=======
+
+>>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
         // Initialize contentPane
         contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -157,6 +172,7 @@ public class ManHinhChinhQuanLy extends JFrame {
             return menuItem;
         }
 
+<<<<<<< HEAD
         public JMenu createTrangChu() {
             JMenu menu = createMenu("Trang chủ");
             
@@ -165,6 +181,19 @@ public class ManHinhChinhQuanLy extends JFrame {
 					showPanel(new Home());
 				}
             });
+=======
+        public JMenu createHeThongMenu() {
+            JMenu menu = createMenu("Hệ thống");
+            menu.add(createMenuItem("Màn hình chính", null));
+            menu.add(createMenuItem("Đăng xuất", e-> {
+            	JFrame topFrame= (JFrame) SwingUtilities.getWindowAncestor(mainPanelRef);
+            	if(topFrame !=null) {
+            		topFrame.dispose();  // đóng mh chính
+            	}
+            	new DangNhap().setVisible(true);
+            }));
+            menu.add(createMenuItem("Thoát", e -> System.exit(0)));
+>>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
             return menu;
         }
 
@@ -189,9 +218,15 @@ public class ManHinhChinhQuanLy extends JFrame {
 
         public JMenu createCaLamMenu() {
             JMenu menu = createMenu("Ca làm");
+<<<<<<< HEAD
             menu.add(createMenuItem("Tra cứu ca làm", e -> showPanel(new TraCuuCaLam())));
             menu.add(createMenuItem("Phân ca làm", null));
             menu.add(createMenuItem("Cập nhật ca làm", e -> showPanel(new ThemCaLam())));
+=======
+            menu.add(createMenuItem("Tra cứu", null));
+            menu.add(createMenuItem("Phân ca", null));
+            menu.add(createMenuItem("Thêm ca mới", null));
+>>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
             return menu;
         }
 
@@ -210,6 +245,7 @@ public class ManHinhChinhQuanLy extends JFrame {
             menu.add(createMenuItem("Thống kê theo tuần", null));
             return menu;
         }
+<<<<<<< HEAD
         
         public JMenu createTaiKhoanMenu() {
         	String gioiTinh = "Nu";
@@ -233,5 +269,7 @@ public class ManHinhChinhQuanLy extends JFrame {
         }
         
         
+=======
+>>>>>>> b27fe9dce01ace53d33061d3e17a8aac47ff0559
     }
 }
