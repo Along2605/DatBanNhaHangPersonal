@@ -14,13 +14,13 @@ public class NhanVien {
     private String chucVu;
     private LocalDate ngayVaoLam;
     private boolean trangThai; // true: Đang làm việc, false: Đã nghỉ việc
-    private List<LichLamViec> danhSachLichLam;
+//    private List<LichLamViec> danhSachLichLam;
     
     
    
-    public NhanVien(){
-    	danhSachLichLam= new ArrayList<LichLamViec>();
-    }
+//    public NhanVien(){
+//    	danhSachLichLam= new ArrayList<LichLamViec>();
+//    }
     public NhanVien(String maNV){
         this.maNV = maNV;
     }
@@ -95,9 +95,6 @@ public class NhanVien {
     public void setTrangThai(boolean trangThai) {
         this.trangThai = trangThai;
     }
-	public List<LichLamViec> getDanhSachLichLam() {
-		return danhSachLichLam;
-	}
 	
 	
     

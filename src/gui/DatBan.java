@@ -13,6 +13,8 @@ import javax.swing.table.JTableHeader;
 import com.toedter.calendar.JDateChooser;
 
 import dao.BanAnDAO;
+import dao.KhachHangDAO;
+import dao.PhieuDatBanDAO;
 import entity.BanAn;
 
 import java.util.Date;
@@ -41,6 +43,11 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
     private JButton btnDatBan;
     private JButton btnLamMoi;
     
+    private PhieuDatBanDAO phieuDatDAO;
+    private KhachHangDAO khachHangDAO;
+    
+    private String maKhachHang = null;
+    
     BanAnDAO banAnDAO = new BanAnDAO();
     // Colors
     private final Color MAU_CAM = new Color(214, 116, 76); // MAIN_COLOR
@@ -58,9 +65,19 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         add(createButtonPanel(), BorderLayout.SOUTH);     
         
         loadDanhSachBanTrong();
+        
+        taoMaPhieuDatTuDong();
+        
     }
     
     
+
+	private void taoMaPhieuDatTuDong() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
 
 	// panel tiêu đề
     private JPanel createHeaderPanel() {
@@ -478,8 +495,103 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
+		Object o= e.getSource();
+		if(o== btnDatBan) {
+//			datBan();
+		}
 		
 	}
+
+//	private void datBan() {
+//		// TODO Auto-generated method stub
+//		
+//	    
+//	    // Kiểm tra đã chọn bàn chưa
+//	    int selectedRow = tableBanTrong.getSelectedRow();
+//	    if (selectedRow == -1) {
+//	        JOptionPane.showMessageDialog(this,
+//	            "Vui lòng chọn một bàn để đặt!",
+//	            "Thông báo", JOptionPane.WARNING_MESSAGE);
+//	        return;
+//	    }
+//	    
+//	    // Lấy thông tin
+//	    String maBan = tableModel.getValueAt(selectedRow, 0).toString();
+//	    String tenBan = tableModel.getValueAt(selectedRow, 1).toString();
+//	    
+//	    Date ngayDat = dateChooserNgayDat.getDate();
+//	    Date gioDat = (Date) spinnerGioDat.getValue();
+//	    
+//	    // Kết hợp ngày và giờ
+//	    java.util.Calendar calNgay = java.util.Calendar.getInstance();
+//	    calNgay.setTime(ngayDat);
+//	    
+//	    java.util.Calendar calGio = java.util.Calendar.getInstance();
+//	    calGio.setTime(gioDat);
+//	    
+//	    calNgay.set(java.util.Calendar.HOUR_OF_DAY, calGio.get(java.util.Calendar.HOUR_OF_DAY));
+//	    calNgay.set(java.util.Calendar.MINUTE, calGio.get(java.util.Calendar.MINUTE));
+//	    
+//	    java.sql.Timestamp ngayGioDat = new java.sql.Timestamp(calNgay.getTimeInMillis());
+//	    
+//	    int soNguoi = Integer.parseInt(txtSoNguoi.getText().trim());
+//	    double soTienCoc = Double.parseDouble(txtSoTienCoc.getText().trim());
+//	    String ghiChu = txtGhiChu.getText().trim();
+//	    
+//	    // Confirm
+//	    int confirm = JOptionPane.showConfirmDialog(this,
+//	        "Xác nhận đặt bàn?\n\n" +
+//	        "Bàn: " + tenBan + "\n" +
+//	        "Khách hàng: " + txtTenKhachHang.getText() + "\n" +
+//	        "Ngày giờ: " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(ngayGioDat) + "\n" +
+//	        "Số người: " + soNguoi + "\n" +
+//	        "Tiền cọc: " + String.format("%,d", (int)soTienCoc) + "đ",
+//	        "Xác nhận", JOptionPane.YES_NO_OPTION);
+//	    
+//	    if (confirm != JOptionPane.YES_OPTION) {
+//	        return;
+//	    }
+//	    
+//	    try {
+//	        // Tạo phiếu đặt bàn
+//	        entity.PhieuDatBan phieuDat = new entity.PhieuDatBan();
+//	        phieuDat.setMaPhieuDat(txtMaPhieuDat.getText());
+//	        phieuDat.setMaKH(maKhachHang);
+//	        phieuDat.setMaBan(maBan);
+//	        phieuDat.setNgayDat(ngayGioDat);
+//	        phieuDat.setSoNguoi(soNguoi);
+//	        phieuDat.setSoTienCoc(soTienCoc);
+//	        phieuDat.setGhiChu(ghiChu);
+//	        phieuDat.setTrangThai("Đã đặt");
+//	        
+//	        // Lưu vào database
+//	        boolean success = phieuDatDAO.themPhieuDatBan(phieuDat);
+//	        
+//	        if (success) {
+//	            JOptionPane.showMessageDialog(this,
+//	                "Đặt bàn thành công!\n\n" +
+//	                "Mã phiếu đặt: " + txtMaPhieuDat.getText() + "\n" +
+//	                "Bàn: " + tenBan + "\n\n" +
+//	                "Vui lòng đến đúng giờ!",
+//	                "Thành công", JOptionPane.INFORMATION_MESSAGE);
+//	            
+//	            // Làm mới form
+//	            lamMoiForm();
+//	        } else {
+//	            JOptionPane.showMessageDialog(this,
+//	                "Đặt bàn thất bại!",
+//	                "Lỗi", JOptionPane.ERROR_MESSAGE);
+//	        }
+//	        
+//	    } catch (Exception e) {
+//	        e.printStackTrace();
+//	        JOptionPane.showMessageDialog(this,
+//	            "Lỗi khi đặt bàn!\n" + e.getMessage(),
+//	            "Lỗi", JOptionPane.ERROR_MESSAGE);
+//	    }
+//	}
+
+
 
 	@Override
 	public void mouseClicked(MouseEvent e) {

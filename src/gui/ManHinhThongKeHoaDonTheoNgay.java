@@ -17,7 +17,9 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.ui.RectangleInsets;
 
-public class ManHinhThongKeHoaDonTheoThang extends JPanel {
+import java.util.Random;
+
+public class ManHinhThongKeHoaDonTheoNgay extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
@@ -54,7 +56,7 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
                 frame.setBounds(0, 0, screenSize.width, screenSize.height);
                 frame.setLocationRelativeTo(null);
                 
-                ManHinhThongKeHoaDonTheoThang panel = new ManHinhThongKeHoaDonTheoThang();
+                ManHinhThongKeHoaDonTheoNgay panel = new ManHinhThongKeHoaDonTheoNgay();
                 frame.add(panel, BorderLayout.CENTER);
                 frame.setVisible(true);
             } catch (Exception e) {
@@ -63,7 +65,7 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
         });
     }
 
-    public ManHinhThongKeHoaDonTheoThang() {
+    public ManHinhThongKeHoaDonTheoNgay() {
         // Thiết lập layout cho panel
         setLayout(new BorderLayout());
 
@@ -76,7 +78,7 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
                         @Override
                         public void windowClosing(WindowEvent e) {
                             int confirm = JOptionPane.showConfirmDialog(
-                                ManHinhThongKeHoaDonTheoThang.this,
+                                ManHinhThongKeHoaDonTheoNgay.this,
                                 "Bạn có chắc muốn thoát không?",
                                 "Xác nhận",
                                 JOptionPane.YES_NO_OPTION
@@ -129,7 +131,7 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
 
         contentPane.setLayout(null);
         
-        JLabel lblTieuDe = new JLabel("THỐNG KÊ HÓA ĐƠN THEO THÁNG");
+        JLabel lblTieuDe = new JLabel("THỐNG KÊ HÓA ĐƠN THEO NGÀY");
         lblTieuDe.setHorizontalAlignment(SwingConstants.CENTER);
         lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 27));
         lblTieuDe.setBounds(460, 0, 450, 59);
@@ -145,15 +147,15 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
         lblDoanhThu_TieuDe.setBounds(10, 11, 91, 21);
         panelDoanhThu.add(lblDoanhThu_TieuDe);
         
-        JLabel lblDoanhThu_TongTien = new JLabel("1,527,003,668");
+        JLabel lblDoanhThu_TongTien = new JLabel("45,251,343");
         lblDoanhThu_TongTien.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblDoanhThu_TongTien.setBounds(10, 35, 150, 21);
+        lblDoanhThu_TongTien.setBounds(10, 35, 112, 21);
         panelDoanhThu.add(lblDoanhThu_TongTien);
         
-        JLabel lblDoanhThu_TheoThang = new JLabel("Theo tháng");
-        lblDoanhThu_TheoThang.setFont(new Font("Segoe UI", Font.ITALIC, 11));
-        lblDoanhThu_TheoThang.setBounds(218, 77, 63, 14);
-        panelDoanhThu.add(lblDoanhThu_TheoThang);
+        JLabel lblDoanhThu_TheoNgay = new JLabel("Theo ngày");
+        lblDoanhThu_TheoNgay.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        lblDoanhThu_TheoNgay.setBounds(218, 77, 63, 14);
+        panelDoanhThu.add(lblDoanhThu_TheoNgay);
         
         JLabel labelDoanhThu_VND = new JLabel("Vnđ");
         labelDoanhThu_VND.setForeground(new Color(0, 0, 0, 150));
@@ -171,15 +173,15 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
         lblHoaDonTaiBan_TieuDe.setBounds(10, 11, 123, 21);
         panelHoaDonTaiBan.add(lblHoaDonTaiBan_TieuDe);
         
-        JLabel lblHoaDonTaiBan_SoLuong = new JLabel("7,286");
+        JLabel lblHoaDonTaiBan_SoLuong = new JLabel("239");
         lblHoaDonTaiBan_SoLuong.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblHoaDonTaiBan_SoLuong.setBounds(10, 35, 112, 21);
         panelHoaDonTaiBan.add(lblHoaDonTaiBan_SoLuong);
         
-        JLabel lblDoanhThu_TheoThang_1 = new JLabel("Theo tháng");
-        lblDoanhThu_TheoThang_1.setFont(new Font("Segoe UI", Font.ITALIC, 11));
-        lblDoanhThu_TheoThang_1.setBounds(218, 76, 63, 14);
-        panelHoaDonTaiBan.add(lblDoanhThu_TheoThang_1);
+        JLabel lblDoanhThu_TheoNgay_1 = new JLabel("Theo ngày");
+        lblDoanhThu_TheoNgay_1.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        lblDoanhThu_TheoNgay_1.setBounds(218, 76, 63, 14);
+        panelHoaDonTaiBan.add(lblDoanhThu_TheoNgay_1);
         
         JLabel labelHoaDonTaiBan_Don = new JLabel("đơn");
         labelHoaDonTaiBan_Don.setForeground(new Color(0, 0, 0, 150));
@@ -197,15 +199,15 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
         lblHoaDoMangDi_TieuDe.setBounds(10, 11, 123, 21);
         panelHoaDonMangDi.add(lblHoaDoMangDi_TieuDe);
         
-        JLabel lblHoaDonTaiBan_SoLuong_1 = new JLabel("487");
+        JLabel lblHoaDonTaiBan_SoLuong_1 = new JLabel("36");
         lblHoaDonTaiBan_SoLuong_1.setFont(new Font("Segoe UI", Font.BOLD, 20));
         lblHoaDonTaiBan_SoLuong_1.setBounds(10, 35, 112, 21);
         panelHoaDonMangDi.add(lblHoaDonTaiBan_SoLuong_1);
         
-        JLabel lblDoanhThu_TheoThang_1_1 = new JLabel("Theo tháng");
-        lblDoanhThu_TheoThang_1_1.setFont(new Font("Segoe UI", Font.ITALIC, 11));
-        lblDoanhThu_TheoThang_1_1.setBounds(218, 76, 63, 14);
-        panelHoaDonMangDi.add(lblDoanhThu_TheoThang_1_1);
+        JLabel lblDoanhThu_TheoNgay_1_1 = new JLabel("Theo ngày");
+        lblDoanhThu_TheoNgay_1_1.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        lblDoanhThu_TheoNgay_1_1.setBounds(218, 76, 63, 14);
+        panelHoaDonMangDi.add(lblDoanhThu_TheoNgay_1_1);
         
         JLabel labelHoaDonTaiBan_Don_1 = new JLabel("đơn");
         labelHoaDonTaiBan_Don_1.setForeground(new Color(0, 0, 0, 150));
@@ -223,15 +225,15 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
         lbl_ChiPhiKhac_TieuDe.setBounds(10, 11, 123, 21);
         panelChiPhiKhac.add(lbl_ChiPhiKhac_TieuDe);
         
-        JLabel lblChiPhiKhac_TongTien = new JLabel("152,700,367");
+        JLabel lblChiPhiKhac_TongTien = new JLabel("487,378");
         lblChiPhiKhac_TongTien.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblChiPhiKhac_TongTien.setBounds(10, 35, 150, 21);
+        lblChiPhiKhac_TongTien.setBounds(10, 35, 112, 21);
         panelChiPhiKhac.add(lblChiPhiKhac_TongTien);
         
-        JLabel lblDoanhThu_TheoThang_1_1_1 = new JLabel("Theo tháng");
-        lblDoanhThu_TheoThang_1_1_1.setFont(new Font("Segoe UI", Font.ITALIC, 11));
-        lblDoanhThu_TheoThang_1_1_1.setBounds(208, 76, 63, 14);
-        panelChiPhiKhac.add(lblDoanhThu_TheoThang_1_1_1);
+        JLabel lblDoanhThu_TheoNgay_1_1_1 = new JLabel("Theo ngày");
+        lblDoanhThu_TheoNgay_1_1_1.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+        lblDoanhThu_TheoNgay_1_1_1.setBounds(223, 76, 63, 14);
+        panelChiPhiKhac.add(lblDoanhThu_TheoNgay_1_1_1);
         
         JLabel labelHoaDonTaiBan_Don_1_1 = new JLabel("Vnđ");
         labelHoaDonTaiBan_Don_1_1.setForeground(new Color(0, 0, 0, 150));
@@ -249,22 +251,22 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
         
         // Tạo biểu đồ cột đứng
         JFreeChart barChart = ChartFactory.createBarChart(
-            "BIỂU ĐỒ THỐNG KÊ DOANH THU THEO THÁNG 10 NĂM 2025",
-            "Ngày",
+            "BIỂU ĐỒ THỐNG KÊ DOANH THU THEO NGÀY 13-10-2025",
+            "Khung giờ",
             "Doanh thu (triệu VND)",
             dataset,
             PlotOrientation.VERTICAL,
             true, true, false
         );
         
-        // Lấy trục hoành (trục ngày)
+        // Lấy trục hoành (trục khung giờ)
         var domainAxis = barChart.getCategoryPlot().getDomainAxis();
         // Giữ nhãn nằm ngang
         domainAxis.setCategoryLabelPositions(
             org.jfree.chart.axis.CategoryLabelPositions.STANDARD
         );
 
-        // Giảm kích cỡ chữ để vừa 31 ngày
+        // Giảm kích cỡ chữ
         domainAxis.setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
 
         // Đảm bảo không bị ẩn nhãn nào
@@ -274,7 +276,7 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
         // Lấy trục tung (trục giá trị)
         var rangeAxis = barChart.getCategoryPlot().getRangeAxis();
 
-        // Giảm kích cỡ chữ trục tung để đồng bộ với trục hoành
+        // Giảm kích cỡ chữ trục tung
         rangeAxis.setTickLabelFont(new Font("Segoe UI", Font.PLAIN, 10));
 
         // Hiển thị rõ ràng các nhãn
@@ -309,14 +311,14 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
         contentPane.add(lblTongTienHoaDon_1);
         
         textFieldTongSoHoaDon = new JTextField();
-        textFieldTongSoHoaDon.setText("7,773");
+        textFieldTongSoHoaDon.setText("275");
         textFieldTongSoHoaDon.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         textFieldTongSoHoaDon.setBounds(863, 174, 150, 20);
         contentPane.add(textFieldTongSoHoaDon);
         textFieldTongSoHoaDon.setColumns(10);
         
         textFieldTongTienHoaDon = new JTextField();
-        textFieldTongTienHoaDon.setText("1,527,003,668 VNĐ");
+        textFieldTongTienHoaDon.setText("44,763,965 VNĐ");
         textFieldTongTienHoaDon.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         textFieldTongTienHoaDon.setColumns(10);
         textFieldTongTienHoaDon.setBounds(863, 205, 150, 20);
@@ -331,44 +333,17 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
         scrollPane.setBounds(10, 5, 611, 341);
         panelTable.add(scrollPane);
         
-        String tableHeader[] = {"Ngày", "Tổng số HĐ", "Tổng tiền HĐ"};
+        String tableHeader[] = {"Khung giờ", "Tổng số HĐ", "Tổng tiền HĐ"};
         model = new DefaultTableModel(tableHeader, 0);
         table = new JTable(model);
         scrollPane.setViewportView(table);
         
-        // Populate the table with data
+        // Populate the table with random data
         for (Object[] row : new Object[][]{
-            {1, 281, "20,019,796 VNĐ"},
-            {2, 294, "34,752,638 VNĐ"},
-            {3, 228, "22,558,413 VNĐ"},
-            {4, 213, "70,902,953 VNĐ"},
-            {5, 269, "17,824,494 VNĐ"},
-            {6, 254, "12,860,441 VNĐ"},
-            {7, 211, "29,677,417 VNĐ"},
-            {8, 264, "64,181,685 VNĐ"},
-            {9, 271, "27,895,388 VNĐ"},
-            {10, 283, "73,119,247 VNĐ"},
-            {11, 253, "29,839,655 VNĐ"},
-            {12, 275, "35,037,163 VNĐ"},
-            {13, 200, "78,292,663 VNĐ"},
-            {14, 220, "72,832,545 VNĐ"},
-            {15, 243, "35,008,420 VNĐ"},
-            {16, 227, "96,149,176 VNĐ"},
-            {17, 243, "19,198,924 VNĐ"},
-            {18, 248, "18,704,473 VNĐ"},
-            {19, 244, "64,335,342 VNĐ"},
-            {20, 205, "75,675,860 VNĐ"},
-            {21, 268, "21,234,354 VNĐ"},
-            {22, 248, "17,092,017 VNĐ"},
-            {23, 237, "84,646,419 VNĐ"},
-            {24, 279, "89,690,657 VNĐ"},
-            {25, 246, "61,961,693 VNĐ"},
-            {26, 290, "16,259,963 VNĐ"},
-            {27, 284, "30,510,844 VNĐ"},
-            {28, 237, "98,669,936 VNĐ"},
-            {29, 229, "87,983,530 VNĐ"},
-            {30, 248, "35,017,624 VNĐ"},
-
+            {"8h-11h", 21, "10,274,835 VNĐ"},
+            {"12h-15h", 27, "5,463,244 VNĐ"},
+            {"16h-19h", 26, "4,846,646 VNĐ"},
+            {"20h-22h", 23, "5,289,659 VNĐ"}
         }) {
             model.addRow(row);
         }
@@ -378,37 +353,10 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
     private DefaultCategoryDataset createRevenueDataset() {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
         
-        dataset.addValue(20.019796, "Doanh thu", "1");
-        dataset.addValue(34.752638, "Doanh thu", "2");
-        dataset.addValue(22.558413, "Doanh thu", "3");
-        dataset.addValue(70.902953, "Doanh thu", "4");
-        dataset.addValue(17.824494, "Doanh thu", "5");
-        dataset.addValue(12.860441, "Doanh thu", "6");
-        dataset.addValue(29.677417, "Doanh thu", "7");
-        dataset.addValue(64.181685, "Doanh thu", "8");
-        dataset.addValue(27.895388, "Doanh thu", "9");
-        dataset.addValue(73.119247, "Doanh thu", "10");
-        dataset.addValue(29.839655, "Doanh thu", "11");
-        dataset.addValue(35.037163, "Doanh thu", "12");
-        dataset.addValue(78.292663, "Doanh thu", "13");
-        dataset.addValue(72.832545, "Doanh thu", "14");
-        dataset.addValue(35.008420, "Doanh thu", "15");
-        dataset.addValue(96.149176, "Doanh thu", "16");
-        dataset.addValue(19.198924, "Doanh thu", "17");
-        dataset.addValue(18.704473, "Doanh thu", "18");
-        dataset.addValue(64.335342, "Doanh thu", "19");
-        dataset.addValue(75.675860, "Doanh thu", "20");
-        dataset.addValue(21.234354, "Doanh thu", "21");
-        dataset.addValue(17.092017, "Doanh thu", "22");
-        dataset.addValue(84.646419, "Doanh thu", "23");
-        dataset.addValue(89.690657, "Doanh thu", "24");
-        dataset.addValue(61.961693, "Doanh thu", "25");
-        dataset.addValue(16.259963, "Doanh thu", "26");
-        dataset.addValue(30.510844, "Doanh thu", "27");
-        dataset.addValue(98.669936, "Doanh thu", "28");
-        dataset.addValue(87.983530, "Doanh thu", "29");
-        dataset.addValue(35.017624, "Doanh thu", "30");
-
+        dataset.addValue(10.274835, "Doanh thu", "8h-11h");
+        dataset.addValue(5.463244, "Doanh thu", "12h-15h");
+        dataset.addValue(4.846646, "Doanh thu", "16h-19h");
+        dataset.addValue(5.289659, "Doanh thu", "20h-22h");
         
         return dataset;
     }
@@ -491,8 +439,6 @@ public class ManHinhThongKeHoaDonTheoThang extends JPanel {
             JMenu menu = createMenu("Doanh thu");
             menu.add(createMenuItem("Thống kê trong ngày", null));
             menu.add(createMenuItem("Thống kê theo tuần", null));
-            menu.add(createMenuItem("Thống kê theo tháng", null));
-            menu.add(createMenuItem("Thống kê theo năm", null));
             return menu;
         }
     }

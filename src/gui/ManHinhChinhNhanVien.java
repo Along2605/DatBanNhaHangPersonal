@@ -67,7 +67,8 @@ public class ManHinhChinhNhanVien extends JFrame {
         });
         
        
-        setTitle("Quản Lý Nhà Hàng");
+        setTitle("Nhân viên");
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         getContentPane().setLayout(new BorderLayout());
         
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -77,7 +78,7 @@ public class ManHinhChinhNhanVien extends JFrame {
         menuBar = new JMenuBar();
         menuBar.setBorder(new LineBorder(new Color(0, 0, 0)));
         menuBar.setBackground(new Color(214, 116, 76, 255));
-        menuBar.setLayout(new FlowLayout(FlowLayout.LEFT));
+        menuBar.setLayout(new BoxLayout(menuBar, BoxLayout.X_AXIS));
         setJMenuBar(menuBar);
         
         // Add logo
@@ -94,14 +95,15 @@ public class ManHinhChinhNhanVien extends JFrame {
         
         // Use MenuBuilder to create menus
         MenuBuilder menuBuilder = new MenuBuilder();
-        menuBar.add(menuBuilder.createHeThongMenu());
+        menuBar.add(menuBuilder.createTrangChu());
         menuBar.add(menuBuilder.createBanAnMenu());
         menuBar.add(menuBuilder.createKhachHangMenu());
         menuBar.add(menuBuilder.createHoaDonMenu());
-        menuBar.add(menuBuilder.createDoanhThuMenu());
+        menuBar.add(menuBuilder.createLichLamMenu());
         
+        menuBar.add(Box.createHorizontalGlue()); //đẩy các componet ra cuối
         
-        
+        menuBar.add(menuBuilder.createTaiKhoanMenu());
         // Initialize contentPane
         contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -148,26 +150,23 @@ public class ManHinhChinhNhanVien extends JFrame {
             return menuItem;
         }
 
-        public JMenu createHeThongMenu() {
-            JMenu menu = createMenu("Hệ thống");
-            menu.add(createMenuItem("Màn hình chính", null));
-            menu.add(createMenuItem("Đăng xuất", e-> {
-            	JFrame topFrame= (JFrame) SwingUtilities.getWindowAncestor(mainPanelRef);
-            	if(topFrame !=null) {
-            		topFrame.dispose();  // đóng mh chính
-            	}
-            	new DangNhap().setVisible(true);
-            }));
-            menu.add(createMenuItem("Thoát", e -> System.exit(0)));
-            return menu;
+        public JMenu createTrangChu() {
+            JMenu menu = createMenu("Trang chủ");
+            
+            menu.addMouseListener(new MouseAdapter() {
+            	public void mouseClicked(MouseEvent e) {
+					showPanel(new Home());
+				}
+            });
+			return menu;
         }
 
         public JMenu createBanAnMenu() {
             JMenu menu = createMenu("Bàn ăn");
+            menu.add(createMenuItem("Danh sách bàn ăn", e -> showPanel(new KhuVuc())));
             menu.add(createMenuItem("Tra cứu", e-> showPanel(new TraCuuBanAn())));
             menu.add(createMenuItem("Đặt bàn", e-> showPanel(new DatBan())));
             menu.add(createMenuItem("Hủy bàn", null));
-            menu.add(createMenuItem("Sơ đồ bàn", null));
             return menu;
         }
 
@@ -181,14 +180,42 @@ public class ManHinhChinhNhanVien extends JFrame {
 
         public JMenu createHoaDonMenu() {
             JMenu menu = createMenu("Hóa đơn");
-           
-            menu.add(createMenuItem("Tra cứu", null));
+            menu.add(createMenuItem("Tra cứu hóa đơn", null));
+            menu.add(createMenuItem("Thống kê trong năm", e->showPanel(new ManHinhThongKeHoaDonTheoNam())));
+            menu.add(createMenuItem("Thống kê trong ng", e->showPanel(new ManHinhThongKeHoaDonTheoNgay())));
+            menu.add(createMenuItem("Thống kê trong th", e->showPanel(new ManHinhThongKeHoaDonTheoThang())));
             return menu;
         }
 
-        public JMenu createDoanhThuMenu() {
-            JMenu menu = createMenu("Doanh thu");
-            menu.add(createMenuItem("Thống kê trong ngày", null));
+        public JMenu createLichLamMenu() {
+            JMenu menu = createMenu("Lịch làm");
+            menu.addMouseListener(new MouseAdapter() {
+            	public void mouseClicked(MouseEvent e) {
+					showPanel(new TraCuuCaLam());
+				}
+            });
+            return menu;
+        }
+        
+        public JMenu createTaiKhoanMenu() {
+        	String gioiTinh = "Nu";
+        	String path = gioiTinh.equalsIgnoreCase("Nam") ? "img/man.png" : "img/woman.png";
+        	ImageIcon iconUser = new ImageIcon(path);
+        	Image imgUser = iconUser.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+        	iconUser = new ImageIcon(imgUser);
+        	
+            JMenu menu = createMenu("Xin chào, Nguyễn văn A0"); //test
+            menu.setIcon(iconUser);
+            menu.add(createMenuItem("Thông tin cá nhân", e -> showPanel(new ManHinhCapNhatNhanVien())));
+            menu.add(createMenuItem("Đổi mật khẩu", e -> showPanel(new DoiMatKhau())));
+            menu.add(createMenuItem("Đăng xuất", e -> {
+            	JFrame topFrame= (JFrame) SwingUtilities.getWindowAncestor(mainPanelRef);
+            	if(topFrame !=null) {
+            		topFrame.dispose();  // đóng mh chính
+            	}
+            	new DangNhap().setVisible(true);
+            }));
+            menu.add(createMenuItem("Thoát", e -> System.exit(0)));
             return menu;
         }
     }
