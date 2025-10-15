@@ -1,14 +1,24 @@
 package gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import com.toedter.calendar.JDateChooser;
-import java.util.Date;
 
-public class DatBan extends JPanel {
+import dao.BanAnDAO;
+import entity.BanAn;
+
+import java.util.Date;
+import java.util.List;
+
+public class DatBan extends JPanel implements ActionListener, MouseListener{
 
     private static final long serialVersionUID = 1L;
    
@@ -31,6 +41,7 @@ public class DatBan extends JPanel {
     private JButton btnDatBan;
     private JButton btnLamMoi;
     
+    BanAnDAO banAnDAO = new BanAnDAO();
     // Colors
     private final Color MAU_CAM = new Color(214, 116, 76); // MAIN_COLOR
     private final Color MAU_CAM_SANG = new Color(234, 136, 96); // HOVER_COLOR
@@ -45,9 +56,13 @@ public class DatBan extends JPanel {
         add(createHeaderPanel(), BorderLayout.NORTH);
         add(createMainPanel(), BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);     
+        
+        loadDanhSachBanTrong();
     }
     
-    // panel tiêu đề
+    
+
+	// panel tiêu đề
     private JPanel createHeaderPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panel.setBackground(BACKGROUND_COLOR);
@@ -254,12 +269,17 @@ public class DatBan extends JPanel {
         
         // Table
         String[] columns = {
-            "Mã bàn", "Tên bàn", "Khu vực", 
-            "Số chỗ", "Loại bàn", "Ghi chú"
+            "Mã bàn", "Tên bàn", "Số lượng chỗ", 
+            "Loại bàn", "Khu vực", "Ghi chú"
         };
         
         tableModel = new DefaultTableModel(columns, 0) {
-            @Override
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
+			@Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
@@ -281,14 +301,15 @@ public class DatBan extends JPanel {
         
         // Column widths
         
-        tableBanTrong.getColumnModel().getColumn(0).setPreferredWidth(80);   // Mã bàn
-        tableBanTrong.getColumnModel().getColumn(1).setPreferredWidth(120);  // Tên bàn
-        tableBanTrong.getColumnModel().getColumn(2).setPreferredWidth(120);  // Khu vực
-        tableBanTrong.getColumnModel().getColumn(3).setPreferredWidth(80);   // Số chỗ
-        tableBanTrong.getColumnModel().getColumn(4).setPreferredWidth(100);  // Loại bàn
-        tableBanTrong.getColumnModel().getColumn(5).setPreferredWidth(150);  // Ghi chú
+        tableBanTrong.getColumnModel().getColumn(0).setPreferredWidth(80);   
+        tableBanTrong.getColumnModel().getColumn(1).setPreferredWidth(120);  
+        tableBanTrong.getColumnModel().getColumn(2).setPreferredWidth(120);  
+        tableBanTrong.getColumnModel().getColumn(3).setPreferredWidth(80);   
+        tableBanTrong.getColumnModel().getColumn(4).setPreferredWidth(100);  
+        tableBanTrong.getColumnModel().getColumn(5).setPreferredWidth(150);  
         
         JScrollPane scrollPane = new JScrollPane(tableBanTrong);
+        tableBanTrong.addMouseListener(this);
         scrollPane.setBorder(new LineBorder(new Color(200, 200, 200)));
         panel.add(scrollPane, BorderLayout.CENTER);
         
@@ -296,7 +317,7 @@ public class DatBan extends JPanel {
         JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         infoPanel.setBackground(new Color(232, 245, 233));
         infoPanel.setBorder(new EmptyBorder(8, 10, 8, 10));
-        JLabel lblTableInfo = new JLabel("✓ Chọn một bàn trong danh sách để đặt");
+        JLabel lblTableInfo = new JLabel("Chọn một bàn trong danh sách để đặt");
         lblTableInfo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblTableInfo.setForeground(new Color(46, 125, 50));
         infoPanel.add(lblTableInfo);
@@ -322,6 +343,36 @@ public class DatBan extends JPanel {
         
         return panel;
     }
+    
+    
+    private void loadDanhSachBanTrong() {
+		// TODO Auto-generated method stub
+    	try {
+    		tableModel.setRowCount(0);
+        	List<BanAn> dsBanTrong= banAnDAO.getDSBanTrong();
+        	if (dsBanTrong == null || dsBanTrong.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Không có bàn trống hoặc lỗi kết nối cơ sở dữ liệu!");
+                return;
+            }
+        	for(BanAn ban: dsBanTrong) {
+        		tableModel.addRow(new Object[] {
+        				ban.getMaBan(),
+        				ban.getTenBan(),
+        				ban.getSoLuongCho(),
+        				ban.getLoaiBan(),
+        				ban.getKhuVuc() !=null ? ban.getKhuVuc().getTenKhuVuc(): "",
+        				ban.getGhiChu()
+        				
+        		});
+        	}
+        	
+		} catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Lỗi khi tải dữ liệu "+e.getMessage());
+		}
+    	
+		
+	}
     
     // them field vào form
     private void addFormField(JPanel panel, GridBagConstraints gbc, int row, 
@@ -390,6 +441,9 @@ public class DatBan extends JPanel {
         return button;
     }
     
+    
+    
+    
     // tạo nút nhỏ
     private JButton createSmallButton(String text, String iconPath) {
     	JButton button;
@@ -420,16 +474,52 @@ public class DatBan extends JPanel {
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
     }
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
     
         
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Test - Đặt bàn");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1400, 800);
-            frame.setLocationRelativeTo(null);
-            frame.add(new DatBan());
-            frame.setVisible(true);
-        });
-    }
+//    public static void main(String[] args) {
+//        SwingUtilities.invokeLater(() -> {
+//            JFrame frame = new JFrame("Test - Đặt bàn");
+//            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//            frame.setSize(1400, 800);
+//            frame.setLocationRelativeTo(null);
+//            frame.add(new DatBan());
+//            frame.setVisible(true);
+//        });
+//    }
 }

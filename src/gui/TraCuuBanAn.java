@@ -375,16 +375,7 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         String soLuongCho = txtSoLuongCho.getText().trim();
         
         
-        JOptionPane.showMessageDialog(this, 
-            "Chức năng tìm kiếm sẽ được cài đặt sau!\n\n" +
-            "Điều kiện tìm kiếm:\n" +
-            "- Mã bàn: " + (maBan.isEmpty() ? "Tất cả" : maBan) + "\n" +
-            "- Tên bàn: " + (tenBan.isEmpty() ? "Tất cả" : tenBan) + "\n" +
-            "- Khu vực: " + khuVuc + "\n" +
-            "- Trạng thái: " + trangThai + "\n" +
-            "- Loại bàn: " + loaiBan + "\n" +
-            "- Số chỗ: " + (soLuongCho.isEmpty() ? "Tất cả" : soLuongCho),
-            "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        
     }
     
     /**
@@ -447,7 +438,7 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
             String trangThai = tableModel.getValueAt(i, 4).toString();
             
             switch (trangThai) {
-                case "Còn trống":
+                case "Trống":
                     banTrong++;
                     break;
                 case "Đang sử dụng":

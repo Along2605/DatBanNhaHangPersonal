@@ -100,7 +100,7 @@ public class BanAnDAO {
 	        SELECT b.*, k.tenKhuVuc
 	        FROM BanAn b
 	        LEFT JOIN KhuVuc k ON b.maKhuVuc = k.maKhuVuc
-	        WHERE b.trangThai = 'Trống'
+	        WHERE b.trangThai = N'Trống'
 	        """;
 	    Connection con = ConnectDB.getConnection();
 	    if (con == null) {

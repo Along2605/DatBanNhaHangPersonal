@@ -127,28 +127,35 @@ public class DialogChiTietBanAn extends JDialog {
         if ("Trống".equals(banAn.getTrangThai())) {
             JButton btnDatBan = createButton("Đặt bàn", MAIN_COLOR);
             btnDatBan.addActionListener(e -> {
-                dispose();
-                JOptionPane.showMessageDialog(parent,
-                        "Chức năng đặt bàn sẽ được cài đặt sau!",
-                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                dispose(); // đóng dialog hiện tại
+                
+                JFrame frameDatBan = new JFrame("Đặt bàn");
+                frameDatBan.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frameDatBan.setSize(1000, 700);
+                frameDatBan.setLocationRelativeTo(parent);
+
+                // Thêm JPanel DatBan vào frame
+                frameDatBan.setContentPane(new DatBan());
+
+                frameDatBan.setVisible(true);
             });
             buttonPanel.add(btnDatBan, 0);
         } else if ("Đang sử dụng".equals(banAn.getTrangThai())) {
             JButton btnXemHoaDon = createButton("Xem hóa đơn", MAIN_COLOR);
             btnXemHoaDon.addActionListener(e -> {
-                dispose();
-                JOptionPane.showMessageDialog(parent,
-                        "Chức năng xem hóa đơn sẽ được cài đặt sau!",
-                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                dispose();                
+                new DialogChiTietHoaDon(parent, banAn).setVisible(true);
             });
+            
             buttonPanel.add(btnXemHoaDon, 0);
         } else if ("Đã đặt".equals(banAn.getTrangThai())) {
             JButton btnXemPhieuDat = createButton("Xem phiếu đặt", MAIN_COLOR);
             btnXemPhieuDat.addActionListener(e -> {
                 dispose();
-                JOptionPane.showMessageDialog(parent,
-                        "Chức năng xem phiếu đặt sẽ được cài đặt sau!",
-                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+//                JOptionPane.showMessageDialog(parent,
+//                        "Chức năng xem phiếu đặt sẽ được cài đặt sau!",
+//                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                new DialogChiTietPhieuDat(parent, banAn).setVisible(true);
             });
             buttonPanel.add(btnXemPhieuDat, 0);
         }
