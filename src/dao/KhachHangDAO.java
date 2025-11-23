@@ -8,7 +8,10 @@ import connectDB.ConnectDB;
 import entity.KhachHang;
 
 public class KhachHangDAO {
-    public boolean themKhachHang(KhachHang kh) {
+	
+	private NhatKyThaoTacDAO dao = NhatKyThaoTacDAO.getInstance();
+	
+    public boolean themKhachHang(KhachHang kh, String maNV) {
         Connection con = ConnectDB.getConnection();
         try {
             
@@ -20,7 +23,14 @@ public class KhachHangDAO {
                 stmt.setString(4, kh.getSdt());
                 
                 stmt.setInt(5, kh.getDiemTichLuy());
-                return stmt.executeUpdate() > 0;
+                
+                boolean result = stmt.executeUpdate() > 0;;
+                
+                if(result == true && maNV != null) {
+                	dao.logThem(maNV, kh, "Thêm khách hàng mới");
+                }
+                return result;
+                
             }
         } catch (Exception e) {
         	System.err.println("❌ Lỗi khi thêm khách hàng:");
@@ -29,7 +39,9 @@ public class KhachHangDAO {
         return false;
     }
 
-	public boolean capNhatKhachHang(KhachHang kh) {
+	public boolean capNhatKhachHang(KhachHang kh, String maNV) {
+		
+		KhachHang khCu = timKhachHangTheoMa(kh.getMaKH());
 		Connection con = ConnectDB.getConnection();
 		String sql = "UPDATE KhachHang SET hoTen=?, gioiTinh=?, sdt=?, diemTichLuy=? WHERE maKH=?";
 
@@ -39,7 +51,13 @@ public class KhachHangDAO {
 			stmt.setString(3, kh.getSdt());
 			stmt.setInt(4, kh.getDiemTichLuy());
 			stmt.setString(5, kh.getMaKH());
-			return stmt.executeUpdate() > 0;
+			
+			 boolean result = stmt.executeUpdate() > 0;
+			 if(result && maNV != null) {
+				 dao.logSua(maNV, khCu, kh, "Sửa thông tin khách hàng");
+			 }
+			
+			
 		} catch (Exception e) {
 			System.err.println("❌ Lỗi khi cập nhật khách hàng:");
 			e.printStackTrace();
@@ -163,13 +181,19 @@ public class KhachHangDAO {
     }
     
     
-    public boolean capNhatTrangThai(String maKH, boolean trangThai) {
+    public boolean capNhatTrangThai(String maKH, boolean trangThai, String maNV) {
         Connection con = ConnectDB.getConnection();
         String sql = "UPDATE KhachHang SET trangThai = ? WHERE maKH = ?";
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setBoolean(1, trangThai);
             stmt.setString(2, maKH);
-            return stmt.executeUpdate() > 0;
+            
+           boolean result = stmt.executeUpdate() > 0;
+           
+           if(result && maNV != null && trangThai == false) {
+        	  dao.logXoa(maNV, timKhachHangTheoMa(maKH), "Xóa khách hàng");
+           }
+           return result;
         } catch (Exception e) {
             System.err.println("❌ Lỗi khi cập nhật trạng thái khách hàng:");
             e.printStackTrace();

@@ -27,6 +27,7 @@ import javax.swing.table.DefaultTableModel;
 
 import dao.KhachHangDAO;
 import entity.KhachHang;
+import util.Session;
 
 public class TraCuuKhachHang extends JPanel implements ActionListener{
 	private JScrollPane scroll;
@@ -216,7 +217,7 @@ public class TraCuuKhachHang extends JPanel implements ActionListener{
 	        KhachHang kh = new KhachHang(maKH, hoTen, gioiTinh, sdt, 0, null, true);
 	        
 
-	        if (khDAO.capNhatKhachHang(kh)) {
+	        if (khDAO.capNhatKhachHang(kh, Session.getMaNhanVienDangNhap())) {
 	            javax.swing.JOptionPane.showMessageDialog(this, "Sửa thông tin khách hàng thành công!");
 	            loadDSKhachHang();
 	        } else {
@@ -243,7 +244,7 @@ public class TraCuuKhachHang extends JPanel implements ActionListener{
 
 	    if (confirm == javax.swing.JOptionPane.YES_OPTION) {
 	        try {
-	            if (khDAO.capNhatTrangThai(maKH, false)) { // false = trạng thái 0
+	            if (khDAO.capNhatTrangThai(maKH, false, Session.getMaNhanVienDangNhap())) { // false = trạng thái 0
 	                javax.swing.JOptionPane.showMessageDialog(this, "Đã chuyển khách hàng sang trạng thái ngừng hoạt động.");
 	                loadDSKhachHang();
 	            } else {

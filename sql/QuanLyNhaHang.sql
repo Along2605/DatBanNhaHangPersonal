@@ -3,6 +3,8 @@ CREATE DATABASE QLNH;
 GO
 
 USE QLNH;
+
+select * from NhatKyThaoTac
 GO
 
 -- Bảng KhuVuc
@@ -447,3 +449,45 @@ WHERE maMon not LIKE 'DO%';
 
 select * from KhachHang
 
+
+-- Tạo bảng lưu nhật ký thao tác
+CREATE TABLE NhatKyThaoTac (
+    maLog INT IDENTITY(1,1) PRIMARY KEY,
+    maNV VARCHAR(10) NOT NULL,               -- Nhân viên thực hiện
+    loaiThaoTac NVARCHAR(20) NOT NULL,        -- THEM, SUA, XOA
+    tenBang NVARCHAR(50) NOT NULL,            -- HoaDon, KhachHang, MonAn,...
+    maDoiTuong NVARCHAR(50) NOT NULL,         -- Mã của đối tượng bị tác động
+    noiDungCu NVARCHAR(MAX) NULL,             -- Dữ liệu trước khi thay đổi (JSON)
+    noiDungMoi NVARCHAR(MAX) NULL,            -- Dữ liệu sau khi thay đổi (JSON)
+    thoiGian DATETIME DEFAULT GETDATE(),      -- Thời gian thao tác
+    ghiChu NVARCHAR(500) NULL,                -- Ghi chú thêm
+    
+    CONSTRAINT FK_NhatKy_NhanVien 
+        FOREIGN KEY (maNV) REFERENCES NhanVien(maNV)
+);
+
+
+
+-- Index để tìm kiếm nhanh
+CREATE INDEX IX_NhatKy_MaNV ON NhatKyThaoTac(maNV);
+CREATE INDEX IX_NhatKy_TenBang ON NhatKyThaoTac(tenBang);
+CREATE INDEX IX_NhatKy_ThoiGian ON NhatKyThaoTac(thoiGian);
+CREATE INDEX IX_NhatKy_MaDoiTuong ON NhatKyThaoTac(maDoiTuong);
+
+-- View để xem log dễ dàng hơn
+CREATE VIEW V_NhatKyThaoTac AS
+SELECT 
+    n.maLog,
+    n.maNV,
+    nv.hoTen AS tenNhanVien,
+    n.loaiThaoTac,
+    n.tenBang,
+    n.maDoiTuong,
+    n.noiDungCu,
+    n.noiDungMoi,
+    n.thoiGian,
+    n.ghiChu
+FROM NhatKyThaoTac n
+LEFT JOIN NhanVien nv ON n.maNV = nv.maNV;
+
+select * from NhatKyThaoTac

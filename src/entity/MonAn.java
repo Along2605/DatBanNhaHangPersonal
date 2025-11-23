@@ -5,7 +5,7 @@
  */
 package entity;
 
-public class MonAn {
+public class MonAn implements Loggable{
     private String maMon;
     private  String tenMon;
     private double gia;
@@ -86,6 +86,27 @@ public class MonAn {
     public void setLoaiMon(String loaiMon) {
         this.loaiMon = loaiMon;
     }
+	@Override
+	public String getMaDoiTuong() {
+		return this.maMon;
+	}
+	@Override
+	public String getTenBang() {
+		return "MonAn";
+	}
+	@Override
+	public String toLogString() {
+		return toString();
+	}
+	
+	@Override
+	public String toString() {
+		return "MonAn [maMon=" + maMon + ", tenMon=" + tenMon + ", gia=" + gia + ", donViTinh=" + donViTinh
+				+ ", trangThai=" + trangThai + ", hinhAnh=" + hinhAnh + ", soLuong=" + soLuong + ", moTa=" + moTa
+				+ ", loaiMon=" + loaiMon + "]";
+	}
+	
+	
     
 
 }

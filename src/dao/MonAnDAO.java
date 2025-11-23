@@ -9,15 +9,16 @@ import java.util.List;
 
 import connectDB.ConnectDB;
 import entity.MonAn;
+import entity.NhatKyThaoTac.LoaiThaoTac;
 
 public class MonAnDAO {
 	
+	private NhatKyThaoTacDAO logDAO = NhatKyThaoTacDAO.getInstance();
 	
     public MonAn layMonAnTheoMa(String maMonAn) {
     	Connection con = ConnectDB.getConnection();
         String sql = "select * from MonAn where maMon=?";
-        try (
-             PreparedStatement stmt = con.prepareStatement(sql)) {
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, maMonAn);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -42,8 +43,7 @@ public class MonAnDAO {
         List<MonAn> dsMonAn = new ArrayList<>();
         Connection con = ConnectDB.getConnection();
         String sql = "SELECT * FROM MonAn";
-        try (
-             PreparedStatement stmt = con.prepareStatement(sql);
+        try (PreparedStatement stmt = con.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 dsMonAn.add(new MonAn(
@@ -82,11 +82,11 @@ public class MonAnDAO {
         else return "Món ăn kèm";
     }
 
-    public boolean themMonMoi(MonAn mon) {
+    // ========== THÊM MÓN MỚI - CÓ LOGGING ==========
+    public boolean themMonMoi(MonAn mon, String maNVThaoTac) {
     	Connection con = ConnectDB.getConnection();
         String sql = "INSERT INTO MonAn (maMon, tenMon, gia, donViTinh, trangThai, hinhAnh, soLuong, moTa, maLoaiMon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (
-             PreparedStatement stmt = con.prepareStatement(sql)) {
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, mon.getMaMon());
             stmt.setString(2, mon.getTenMon());
             stmt.setDouble(3, mon.getGia());
@@ -95,19 +95,32 @@ public class MonAnDAO {
             stmt.setString(6, mon.getHinhAnh());
             stmt.setInt(7, mon.getSoLuong());
             stmt.setString(8, mon.getMoTa());
-            stmt.setString(9, mon.getLoaiMon()); // Đã là mã loại (MC, DO, MK)
-            return stmt.executeUpdate() > 0;
+            stmt.setString(9, mon.getLoaiMon());
+            
+            boolean result = stmt.executeUpdate() > 0;
+            
+            // GHI LOG nếu thành công
+            if (result && maNVThaoTac != null) {
+                logDAO.logThem(maNVThaoTac, mon, "Thêm món ăn mới");
+            }
+            
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
+    
+   
 
-    public boolean suaMonAn(MonAn mon) {
+    // ========== SỬA MÓN ĂN - CÓ LOGGING ==========
+    public boolean suaMonAn(MonAn mon, String maNVThaoTac) {
+        // Lấy dữ liệu cũ trước khi cập nhật
+        MonAn monCu = layMonAnTheoMa(mon.getMaMon());
+        
         String sql = "UPDATE MonAn SET tenMon = ?, gia = ?, donViTinh = ?, trangThai = ?, hinhAnh = ?, soLuong = ?, moTa = ?, maLoaiMon = ? WHERE maMon = ?";
         Connection con = ConnectDB.getConnection();
-        try (
-             PreparedStatement stmt = con.prepareStatement(sql)) {
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, mon.getTenMon());
             stmt.setDouble(2, mon.getGia());
             stmt.setString(3, mon.getDonViTinh());
@@ -117,30 +130,57 @@ public class MonAnDAO {
             stmt.setString(7, mon.getMoTa());
             stmt.setString(8, mon.getLoaiMon()); 
             stmt.setString(9, mon.getMaMon());
-            return stmt.executeUpdate() > 0;
+            
+            boolean result = stmt.executeUpdate() > 0;
+            
+            // GHI LOG nếu thành công
+            if (result && maNVThaoTac != null && monCu != null) {
+                logDAO.logSua(maNVThaoTac, monCu, mon, "Cập nhật thông tin món ăn");
+            }
+            
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
+    
+    
 
-    public boolean anMonAn(String maMon) throws SQLException {
+    // ========== ẨN MÓN ĂN - CÓ LOGGING ==========
+    public boolean anMonAn(String maMon, String maNVThaoTac) throws SQLException {
+        // Lấy dữ liệu cũ
+        MonAn monCu = layMonAnTheoMa(maMon);
+        
         String sql = "UPDATE MonAn SET trangThai = 0 WHERE maMon = ?";
         Connection con = ConnectDB.getConnection();
-        try (
-             PreparedStatement pst = con.prepareStatement(sql)) {
+        try (PreparedStatement pst = con.prepareStatement(sql)) {
             pst.setString(1, maMon);
-            return pst.executeUpdate() > 0;
+            boolean result = pst.executeUpdate() > 0;
+            
+            // GHI LOG nếu thành công
+            if (result && maNVThaoTac != null && monCu != null) {
+                logDAO.logDonGian(
+                    maNVThaoTac, 
+                    LoaiThaoTac.SUA, 
+                    "MonAn", 
+                    maMon,
+                    "Trạng thái: Hoạt động -> Ngừng bán",
+                    "Ẩn món ăn (ngừng bán)"
+                );
+            }
+            
+            return result;
         }
     }
-
+    
+    
 
     public ArrayList<String> layRaLoaiMonAn() throws SQLException {
         ArrayList<String> dsTenLoaiMonAn = new ArrayList<>();
         String sql = "SELECT tenLoaiMon FROM LoaiMonAn";
         Connection con = ConnectDB.getConnection();
-        try (
-             PreparedStatement stmt = con.prepareStatement(sql);
+        try (PreparedStatement stmt = con.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 dsTenLoaiMonAn.add(rs.getString("tenLoaiMon"));
@@ -156,8 +196,7 @@ public class MonAnDAO {
         ArrayList<String> list = new ArrayList<>();
         String sql = "SELECT DISTINCT donViTinh FROM MonAn WHERE donViTinh IS NOT NULL";
         Connection con = ConnectDB.getConnection();
-        try (
-             PreparedStatement ps = con.prepareStatement(sql);
+        try (PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(rs.getString("donViTinh"));
@@ -171,8 +210,7 @@ public class MonAnDAO {
     public String layMaMonLonNhatTheoLoai(String maLoai) {
     	Connection con = ConnectDB.getConnection();
         String sql = "SELECT TOP 1 maMon FROM MonAn WHERE maMon LIKE ? ORDER BY maMon DESC";
-        try (
-             PreparedStatement stmt = con.prepareStatement(sql)) {
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, maLoai + "%");
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -194,7 +232,6 @@ public class MonAnDAO {
         }
     }
     
-
     public String chuyenMaLoaiSangTen(String maLoai) throws SQLException {
     	Connection con = ConnectDB.getConnection();
         String sql = "SELECT tenLoaiMon FROM LoaiMonAn WHERE maLoaiMon = ?";

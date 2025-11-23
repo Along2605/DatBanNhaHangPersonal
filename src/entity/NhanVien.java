@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NhanVien {
+public class NhanVien implements Loggable{
     private String maNV;
     private String hoTen;
     private LocalDate ngaySinh;
@@ -120,16 +120,31 @@ public class NhanVien {
 	public void setAnhDaiDien(String anhDaiDien) {
 		this.anhDaiDien = anhDaiDien;
 	}
+
+	@Override
+	public String getMaDoiTuong() {
+		return this.maNV;
+	}
+
+	@Override
+	public String getTenBang() {
+		return "NhanVien";
+	}
+
+	@Override
+	public String toLogString() {
+		return toString();
+	}
     
 	
 	
     
     
-//    @Override
-//    public String toString() {
-//        return "NhanVien [maNV=" + maNV + ", hoTen=" + hoTen + ", ngaySinh=" + ngaySinh + ", email=" + email
-//                + ", soDienThoai=" + soDienThoai + ", gioiTinh=" + gioiTinh + ", chucVu=" + chucVu + ", ngayVaoLam="
-//                + ngayVaoLam + ", trangThai=" + trangThai + "]";
-//    }   
+    @Override
+    public String toString() {
+        return "NhanVien [maNV=" + maNV + ", hoTen=" + hoTen + ", ngaySinh=" + ngaySinh + ", email=" + email
+                + ", soDienThoai=" + soDienThoai + ", gioiTinh=" + gioiTinh + ", chucVu=" + chucVu + ", ngayVaoLam="
+                + ngayVaoLam + ", trangThai=" + trangThai + "]";
+    }   
 }
 

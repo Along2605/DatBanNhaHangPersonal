@@ -1,10 +1,11 @@
 package entity;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HoaDon {
+public class HoaDon implements Loggable {
     private String maHoaDon;
     private BanAn banAn;
     private KhachHang khachHang;
@@ -142,4 +143,27 @@ public class HoaDon {
     public void setDsChiTiet(List<ChiTietHoaDon> dsChiTiet) {
         this.dsChiTiet = dsChiTiet;
     }
+
+	@Override
+	public String getMaDoiTuong() {
+		return this.maHoaDon;
+	}
+
+	@Override
+	public String getTenBang() {
+		return "HoaDon";
+	}
+
+	@Override
+	public String toString() {
+		return "HoaDon [maHoaDon=" + maHoaDon + ", banAn=" + banAn + ", khachHang=" + khachHang + ", nhanVien="
+				+ nhanVien + ", ngayLapHoaDon=" + ngayLapHoaDon + ", thueVAT=" + thueVAT + ", tongTien=" + tongTien
+				+ ", khuyenMai=" + khuyenMai + ", trangThai=" + trangThai + ", phieuDat=" + phieuDat + ", tienCoc="
+				+ tienCoc + ", dsChiTiet=" + dsChiTiet + "]";
+	}
+
+	@Override
+	public String toLogString() {
+		return toString();
+	}
 }

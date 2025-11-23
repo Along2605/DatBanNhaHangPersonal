@@ -2,6 +2,7 @@ package gui;
 
 import dao.MonAnDAO;
 import entity.MonAn;
+import util.Session;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -410,7 +411,7 @@ public class ThemMonAn extends JPanel {
             }
 
             MonAn mon = new MonAn(maMon, tenMon, gia, dvt, trangThai, "img/thucdon/" + hinhAnh, soLuong, moTa, loaiMon);
-            if (dao.themMonMoi(mon)) {
+            if (dao.themMonMoi(mon, Session.getMaNhanVienDangNhap())) {
                 JOptionPane.showMessageDialog(this, "Thêm thành công!");
                 lamMoiForm(); loadTable();
             }
@@ -441,7 +442,7 @@ public class ThemMonAn extends JPanel {
             }
 
             MonAn mon = new MonAn(maMon, tenMon, gia, dvt, trangThai, hinhAnh, soLuong, moTa, loaiMon);
-            if (dao.suaMonAn(mon)) {
+            if (dao.suaMonAn(mon, Session.getMaNhanVienDangNhap())) {
                 JOptionPane.showMessageDialog(this, "Sửa thành công!");
                 lamMoiForm(); loadTable();
             }
@@ -456,7 +457,7 @@ public class ThemMonAn extends JPanel {
         if (JOptionPane.showConfirmDialog(this, "Xóa món này?", "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             String maMon = (String) table.getValueAt(row, 0);
             try {
-                if (dao.anMonAn(maMon)) {
+                if (dao.anMonAn(maMon, Session.getMaNhanVienDangNhap())) {
                     JOptionPane.showMessageDialog(this, "Xóa thành công!");
                     lamMoiForm(); loadTable();
                 }

@@ -327,7 +327,7 @@ public class ManHinhDatMon extends JPanel {
                         kh.setDiemTichLuy(0);
                         kh.setNgayDangKy(LocalDate.now());
                         kh.setTrangThai(true);
-                        khDAO.themKhachHang(kh);
+                        khDAO.themKhachHang(kh, Session.getMaNhanVienDangNhap());
                     }
                 }
 
@@ -343,7 +343,7 @@ public class ManHinhDatMon extends JPanel {
                 hdMoi.setTrangThai("Chưa thanh toán");
                 hdMoi.setTienCoc(0);
 
-                if (!hdDAO.themHoaDon(hdMoi)) {
+                if (!hdDAO.themHoaDon(hdMoi, Session.getMaNhanVienDangNhap())) {
                     JOptionPane.showMessageDialog(this, "Lỗi tạo hóa đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }

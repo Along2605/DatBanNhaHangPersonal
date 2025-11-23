@@ -15,6 +15,7 @@ import javax.swing.border.TitledBorder;
 
 import dao.NhanVienDAO;
 import entity.NhanVien;
+import util.Session;
 
 public class ManHinhCapNhatNhanVien extends JPanel implements ActionListener {
     private JTextField txtMaNV, txtHoTen, txtNgaySinh, txtEmail, txtSoDienThoai, txtNgayVaoLam;
@@ -288,7 +289,7 @@ public class ManHinhCapNhatNhanVien extends JPanel implements ActionListener {
         
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                boolean success = nhanVienDAO.capNhatNhanVien(nv);
+                boolean success = nhanVienDAO.capNhatNhanVien(nv, Session.getMaNhanVienDangNhap());
                 
                 if (success) {
                     JOptionPane.showMessageDialog(this,

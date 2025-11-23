@@ -20,6 +20,7 @@ import entity.BanAn;
 import entity.KhachHang;
 import entity.NhanVien;
 import entity.PhieuDatBan;
+import util.Session;
 
 import java.util.Date;
 import java.util.List;
@@ -681,7 +682,7 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
 	            khMoi.setGioiTinh(gioiTinh);
 	            khMoi.setDiemTichLuy(0);
 	            
-	            boolean success = khachHangDAO.themKhachHang(khMoi);
+	            boolean success = khachHangDAO.themKhachHang(khMoi, Session.getMaNhanVienDangNhap());
 	            
 	            if (success) {
 	                maKhachHang = maKH;

@@ -15,6 +15,7 @@ import javax.swing.border.TitledBorder;
 
 import dao.NhanVienDAO;
 import entity.NhanVien;
+import util.Session;
 
 public class ManHinhThemNhanVien extends JPanel implements ActionListener {
     private JTextField txtMaNV, txtHoTen, txtNgaySinh, txtEmail, txtSoDienThoai, txtNgayVaoLam;
@@ -310,7 +311,7 @@ public class ManHinhThemNhanVien extends JPanel implements ActionListener {
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 // Gọi phương thức themNhanVien từ DAO
-                boolean success = nhanVienDAO.themNhanVien(nv);
+                boolean success = nhanVienDAO.themNhanVien(nv, Session.getMaNhanVienDangNhap());
 
                 if (success) {
                     JOptionPane.showMessageDialog(this,

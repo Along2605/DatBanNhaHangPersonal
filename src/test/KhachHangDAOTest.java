@@ -12,6 +12,7 @@ import org.junit.jupiter.api.*;
 import connectDB.ConnectDB;
 import dao.KhachHangDAO;
 import entity.KhachHang;
+import util.Session;
 
 public class KhachHangDAOTest {
 
@@ -72,14 +73,14 @@ public class KhachHangDAOTest {
     }
     @Test
     void testThemKhachHang() {
-        boolean result = dao.themKhachHang(khTest);
+        boolean result = dao.themKhachHang(khTest, Session.getMaNhanVienDangNhap());
         assertTrue(result, "❌ Thêm khách hàng thất bại!");
     }
 
     @Test
     void testTimKhachHangTheoMa() {
         
-        dao.themKhachHang(khTest);
+        dao.themKhachHang(khTest, Session.getMaNhanVienDangNhap());
 
         KhachHang found = dao.timKhachHangTheoMa("KH999");
         assertNotNull(found, "❌ Không tìm thấy khách hàng theo mã!");
@@ -88,7 +89,7 @@ public class KhachHangDAOTest {
 
     @Test
     void testTimKhachHangTheoSDT() {
-        dao.themKhachHang(khTest);
+        dao.themKhachHang(khTest, Session.getMaNhanVienDangNhap());
 
         KhachHang found = dao.timKhachHangTheoSDT("0909000999");
         assertNotNull(found, "❌ Không tìm thấy khách hàng theo SĐT!");

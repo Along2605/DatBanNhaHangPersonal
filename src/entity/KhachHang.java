@@ -2,7 +2,7 @@ package entity;
 
 import java.time.LocalDate;
 
-public class KhachHang {
+public class KhachHang implements Loggable {
     private String maKH;
     private String hoTen;
     private boolean gioiTinh; // true: Nam, false: Nữ
@@ -75,11 +75,24 @@ public class KhachHang {
 	
 	
 	
-//	@Override
-//	public String toString() {
-//		return "KhachHang [maKH=" + maKH + ", hoTen=" + hoTen + ", gioiTinh=" + gioiTinh + ", sdt=" + sdt
-//				+ ", diemTichLuy=" + diemTichLuy + "]";
-//	}
+	@Override
+	public String toString() {
+		return "KhachHang [maKH=" + maKH + ", hoTen=" + hoTen + ", gioiTinh=" + gioiTinh + ", sdt=" + sdt
+				+ ", diemTichLuy=" + diemTichLuy + "]";
+	}
+	@Override
+	public String getMaDoiTuong() {
+	return this.maKH;
+	}
+	@Override
+	public String getTenBang() {
+		return "KhachHang";
+	}
+	
+	@Override
+	public String toLogString() {
+		return toString();
+	}
     
     
 }
