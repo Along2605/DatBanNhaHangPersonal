@@ -8,9 +8,9 @@ import entity.HoaDon;
 import entity.MonAn;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,220 +19,270 @@ import java.util.Map;
 
 public class TraCuuMonAn extends JPanel {
     private static final long serialVersionUID = 1L;
-    private JPanel panelCenterCenter;
-    private MonAnDAO monAnDAO = new MonAnDAO();
-    private ChiTietHoaDonDAO cthdDAO = new ChiTietHoaDonDAO();
-    private HoaDonDAO hoaDonDAO = new HoaDonDAO();
 
-    private DecimalFormat df = new DecimalFormat("#,##0 đ");
+    private final MonAnDAO monAnDAO = new MonAnDAO();
+    private final ChiTietHoaDonDAO cthdDAO = new ChiTietHoaDonDAO();
+    private final HoaDonDAO hoaDonDAO = new HoaDonDAO();
+    private final DecimalFormat df = new DecimalFormat("#,##0 đ");
 
     private List<MonAn> danhSachMonAnHienTai;
     private List<MonAn> listGoc;
+    private final Map<String, Integer> soLuongBanMap = new HashMap<>();
 
-    // Lưu số lượng bán của từng món (tính từ ChiTietHoaDon)
-    private Map<String, Integer> soLuongBanMap = new HashMap<>();
+    private JPanel panelCenterCenter;
 
     public TraCuuMonAn() {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setSize((int) screenSize.getWidth(), (int) (screenSize.getHeight() - 75));
         setLayout(null);
+        setBackground(new Color(245, 245, 245));
 
+        initUI();
+        loadMonAnFromDB();
+        tinhSoLuongBanCacMon();
+    }
+
+    private void initUI() {
+        // Tiêu đề
         JLabel lblTieuDe = new JLabel("Danh sách các món ăn đang kinh doanh");
         lblTieuDe.setBounds(443, 35, 455, 32);
-        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 26));
         add(lblTieuDe);
 
+        // ==================== PANEL TRÁI - DANH MỤC ====================
         JPanel panelWest = new JPanel();
         panelWest.setBounds(10, 108, 246, 517);
-        add(panelWest);
+        panelWest.setBackground(Color.WHITE);
+        panelWest.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(200, 200, 200), 1),
+                new EmptyBorder(15, 15, 15, 15)));
         panelWest.setLayout(null);
+        add(panelWest);
 
-        JButton btnTatCaDanhMuc = new JButton("Tất cả danh mục");
-        btnTatCaDanhMuc.setFont(new Font("Segoe UI", Font.BOLD, 17));
-        btnTatCaDanhMuc.setBounds(39, 11, 170, 34);
+        // Các button danh mục (giữ nguyên tọa độ cũ)
+        JButton btnTatCaDanhMuc = createCleanButton("Tất cả danh mục", 39, 11, 170, 34, 17, true);
+        JButton btnMonAnChinh = createCleanButton("Món ăn chính", 77, 49, 129, 30, 14, true);
+        JButton btnTokbokki = createCleanButton("Tokbokki", 117, 82, 89, 23, 11, false);
+        JButton btnCom = createCleanButton("Cơm", 117, 106, 89, 23, 11, false);
+        JButton btnLau = createCleanButton("Lẩu", 117, 132, 89, 23, 11, false);
+        JButton btnMi = createCleanButton("Mì", 117, 156, 89, 23, 11, false);
+        JButton btnKhac = createCleanButton("Khác", 117, 180, 89, 23, 11, false);
+        JButton btnDoUong = createCleanButton("Đồ uống", 77, 205, 129, 30, 14, true);
+        JButton btnNuocSuoi = createCleanButton("Nước suối", 117, 237, 89, 23, 11, false);
+        JButton btnTraSua = createCleanButton("Trà sữa", 117, 262, 89, 23, 11, false);
+        JButton btnRuou = createCleanButton("Rượu", 117, 288, 89, 23, 11, false);
+        JButton btnKhac2 = createCleanButton("Khác", 117, 317, 89, 23, 11, false);
+        JButton btnMonAnKem = createCleanButton("Món ăn kèm", 77, 345, 129, 30, 14, true);
+        JButton btnKimbab = createCleanButton("Kimbab", 117, 380, 89, 23, 11, false);
+        JButton btnMandu = createCleanButton("Mandu", 117, 403, 89, 23, 11, false);
+        JButton btnSalad = createCleanButton("Salad", 117, 427, 89, 23, 11, false);
+        JButton btnKhac3 = createCleanButton("Khác", 117, 453, 89, 23, 11, false);
+
+        panelWest.add(btnTatCaDanhMuc); panelWest.add(btnMonAnChinh); panelWest.add(btnTokbokki);
+        panelWest.add(btnCom); panelWest.add(btnLau); panelWest.add(btnMi); panelWest.add(btnKhac);
+        panelWest.add(btnDoUong); panelWest.add(btnNuocSuoi); panelWest.add(btnTraSua);
+        panelWest.add(btnRuou); panelWest.add(btnKhac2); panelWest.add(btnMonAnKem);
+        panelWest.add(btnKimbab); panelWest.add(btnMandu); panelWest.add(btnSalad); panelWest.add(btnKhac3);
+
+        // Gắn sự kiện (giữ nguyên logic cũ)
         btnTatCaDanhMuc.addActionListener(e -> locTatCaDanhMuc());
-        panelWest.add(btnTatCaDanhMuc);
-
-        JButton btnMonAnChinh = new JButton("Món ăn chính");
-        btnMonAnChinh.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnMonAnChinh.setBounds(77, 49, 129, 30);
         btnMonAnChinh.addActionListener(e -> locTheoMonAnChinh());
-        panelWest.add(btnMonAnChinh);
-
-        JButton btnTokbokki = new JButton("Tokbokki");
-        btnTokbokki.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnTokbokki.setBounds(117, 82, 89, 23);
         btnTokbokki.addActionListener(e -> locTheoTuKhoa("Tokbokki"));
-        panelWest.add(btnTokbokki);
-
-        JButton btnCom = new JButton("Cơm");
-        btnCom.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnCom.setBounds(117, 106, 89, 23);
         btnCom.addActionListener(e -> locTheoTuKhoa("Cơm"));
-        panelWest.add(btnCom);
-
-        JButton btnLau = new JButton("Lẩu");
-        btnLau.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnLau.setBounds(117, 132, 89, 23);
         btnLau.addActionListener(e -> locTheoTuKhoa("Lẩu"));
-        panelWest.add(btnLau);
-
-        JButton btnMì = new JButton("Mì");
-        btnMì.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnMì.setBounds(117, 156, 89, 23);
-        btnMì.addActionListener(e -> locTheoTuKhoa("Mì"));
-        panelWest.add(btnMì);
-
-        JButton btnKhac = new JButton("Khác");
-        btnKhac.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnKhac.setBounds(117, 180, 89, 23);
+        btnMi.addActionListener(e -> locTheoTuKhoa("Mì"));
         btnKhac.addActionListener(e -> locMonKhac("MC", List.of("Tokbokki", "Cơm", "Lẩu", "Mì")));
-        panelWest.add(btnKhac);
-
-        JButton btnDoUong = new JButton("Đồ uống");
-        btnDoUong.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnDoUong.setBounds(77, 205, 129, 30);
         btnDoUong.addActionListener(e -> locTheoDoUong());
-        panelWest.add(btnDoUong);
-
-        JButton btnNuocSuoi = new JButton("Nước suối");
-        btnNuocSuoi.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnNuocSuoi.setBounds(117, 237, 89, 23);
         btnNuocSuoi.addActionListener(e -> locTheoTuKhoa("Nước suối"));
-        panelWest.add(btnNuocSuoi);
-
-        JButton btnTraSua = new JButton("Trà sữa");
-        btnTraSua.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnTraSua.setBounds(117, 262, 89, 23);
         btnTraSua.addActionListener(e -> locTheoTuKhoa("Trà sữa"));
-        panelWest.add(btnTraSua);
-
-        JButton btnRuou = new JButton("Rượu");
-        btnRuou.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnRuou.setBounds(117, 288, 89, 23);
         btnRuou.addActionListener(e -> locTheoTuKhoa("Rượu"));
-        panelWest.add(btnRuou);
-
-        JButton btnKhac_1 = new JButton("Khác");
-        btnKhac_1.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnKhac_1.setBounds(117, 317, 89, 23);
-        btnKhac_1.addActionListener(e -> locMonKhac("DO", List.of("Nước suối", "Trà sữa", "Rượu")));
-        panelWest.add(btnKhac_1);
-
-        JButton btnMonAnKem = new JButton("Món ăn kèm");
-        btnMonAnKem.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnMonAnKem.setBounds(77, 345, 129, 30);
+        btnKhac2.addActionListener(e -> locMonKhac("DO", List.of("Nước suối", "Trà sữa", "Rượu")));
         btnMonAnKem.addActionListener(e -> locTheoMonAnKem());
-        panelWest.add(btnMonAnKem);
-
-        JButton btnKimbab = new JButton("Kimbab");
-        btnKimbab.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnKimbab.setBounds(117, 380, 89, 23);
         btnKimbab.addActionListener(e -> locTheoTuKhoa("Kimbab"));
-        panelWest.add(btnKimbab);
-
-        JButton btnMandu = new JButton("Mandu");
-        btnMandu.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnMandu.setBounds(117, 403, 89, 23);
         btnMandu.addActionListener(e -> locTheoTuKhoa("Mandu"));
-        panelWest.add(btnMandu);
-
-        JButton btnSalad = new JButton("Salad");
-        btnSalad.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnSalad.setBounds(117, 427, 89, 23);
         btnSalad.addActionListener(e -> locTheoTuKhoa("Salad"));
-        panelWest.add(btnSalad);
+        btnKhac3.addActionListener(e -> locMonKhac("MK", List.of("Kimbab", "Mandu", "Salad")));
 
-        JButton btnKhac_1_1 = new JButton("Khác");
-        btnKhac_1_1.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        btnKhac_1_1.setBounds(117, 453, 89, 23);
-        btnKhac_1_1.addActionListener(e -> locMonKhac("MK", List.of("Kimbab", "Mandu", "Salad")));
-        panelWest.add(btnKhac_1_1);
-
+        // ==================== PANEL GIỮA ====================
         JPanel panelCenter = new JPanel();
         panelCenter.setBounds(266, 78, 1100, 457);
-        add(panelCenter);
+        panelCenter.setBackground(Color.WHITE);
+        panelCenter.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         panelCenter.setLayout(null);
+        add(panelCenter);
 
         JPanel panelCenterNorth = new JPanel();
         panelCenterNorth.setBounds(28, 11, 1044, 96);
-        panelCenter.add(panelCenterNorth);
+        panelCenterNorth.setBackground(Color.WHITE);
         panelCenterNorth.setLayout(null);
+        panelCenter.add(panelCenterNorth);
 
         JLabel lblSapXepTheo = new JLabel("Sắp xếp theo");
-        lblSapXepTheo.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblSapXepTheo.setFont(new Font("Segoe UI", Font.BOLD, 16));
         lblSapXepTheo.setBounds(38, 34, 113, 22);
         panelCenterNorth.add(lblSapXepTheo);
 
-        JButton btnPhoBien = new JButton("Phổ biến");
-        btnPhoBien.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        btnPhoBien.setBounds(147, 25, 108, 43);
-        btnPhoBien.addActionListener(e -> sapXepTheoDoPhoBien()); // ĐÃ SỬA CHUẨN
+        JButton btnPhoBien = createCleanButton("Phổ biến", 147, 25, 108, 43, 16, false);
+        btnPhoBien.addActionListener(e -> sapXepTheoDoPhoBien());
         panelCenterNorth.add(btnPhoBien);
 
-        JButton btnMoiNhat = new JButton("Mới nhất");
-        btnMoiNhat.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        btnMoiNhat.setBounds(276, 26, 108, 43);
+        JButton btnMoiNhat = createCleanButton("Mới nhất", 276, 26, 108, 43, 16, false);
         btnMoiNhat.addActionListener(e -> sapXepTheoMaMonGiamDan());
         panelCenterNorth.add(btnMoiNhat);
 
-        String comboBoxGiaData[] = { "Giá", "Giá: Thấp đến cao", "Giá: Cao đến thấp" };
-        JComboBox<String> comboBoxGia = new JComboBox<>(comboBoxGiaData);
+        String[] giaOptions = {"Giá", "Giá: Thấp đến cao", "Giá: Cao đến thấp"};
+        JComboBox<String> comboBoxGia = new JComboBox<>(giaOptions);
         comboBoxGia.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         comboBoxGia.setBounds(410, 25, 215, 43);
+        comboBoxGia.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180), 1, true));
         comboBoxGia.addActionListener(e -> {
             String selected = (String) comboBoxGia.getSelectedItem();
-            if ("Giá: Thấp đến cao".equals(selected)) {
-                sapXepTheoGiaTangDan();
-            } else if ("Giá: Cao đến thấp".equals(selected)) {
-                sapXepTheoGiaGiamDan();
-            }
+            if ("Giá: Thấp đến cao".equals(selected)) sapXepTheoGiaTangDan();
+            else if ("Giá: Cao đến thấp".equals(selected)) sapXepTheoGiaGiamDan();
         });
         panelCenterNorth.add(comboBoxGia);
 
+        // Khu vực hiển thị món
         panelCenterCenter = new JPanel();
         panelCenterCenter.setLayout(new BoxLayout(panelCenterCenter, BoxLayout.Y_AXIS));
+        panelCenterCenter.setBackground(Color.WHITE);
+
         JScrollPane scrollPane = new JScrollPane(panelCenterCenter);
         scrollPane.setBounds(76, 118, 996, 379);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         panelCenter.add(scrollPane);
 
-        JPanel panel_2 = new JPanel();
-        panel_2.setBounds(276, 546, 1090, 77);
-        add(panel_2);
-        panel_2.setLayout(null);
+        // ==================== PANEL DƯỚI - TÌM KIẾM ====================
+        JPanel panelBottom = new JPanel();
+        panelBottom.setBounds(276, 546, 1090, 77);
+        panelBottom.setBackground(Color.WHITE);
+        panelBottom.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(200, 200, 200)),
+                new EmptyBorder(15, 15, 15, 15)));
+        panelBottom.setLayout(null);
+        add(panelBottom);
 
         JTextArea textAreaTimKiem = new JTextArea();
         textAreaTimKiem.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         textAreaTimKiem.setBounds(73, 27, 348, 28);
-        textAreaTimKiem.setBackground(new Color(245, 245, 250));
         textAreaTimKiem.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(180, 180, 200), 1, true),
-                BorderFactory.createEmptyBorder(5, 8, 5, 8)
-        ));
+                new LineBorder(new Color(180, 180, 180), 1, true),
+                new EmptyBorder(5, 10, 5, 10)));
         textAreaTimKiem.setLineWrap(true);
         textAreaTimKiem.setWrapStyleWord(true);
-        panel_2.add(textAreaTimKiem);
+        panelBottom.add(textAreaTimKiem);
 
         JButton btnTimKiem = new JButton();
         btnTimKiem.setBounds(431, 27, 47, 28);
-        ImageIcon icon = new ImageIcon("img\\search.png");
-        Image img = icon.getImage().getScaledInstance(btnTimKiem.getWidth()-5, btnTimKiem.getHeight()-5, Image.SCALE_SMOOTH);
-        btnTimKiem.setIcon(new ImageIcon(img));
+        btnTimKiem.setIcon(resizeIcon("img/search.png", 20, 20));
+        btnTimKiem.setBorderPainted(false);
+        btnTimKiem.setContentAreaFilled(false);
+        btnTimKiem.setFocusPainted(false);
         btnTimKiem.addActionListener(e -> timKiemBangTuKhoa(textAreaTimKiem.getText()));
-        panel_2.add(btnTimKiem);
+        panelBottom.add(btnTimKiem);
 
-        JButton btnThemMonAn = new JButton("Thêm món ăn");
-        btnThemMonAn.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        btnThemMonAn.setBounds(552, 28, 137, 28);
+        JButton btnThemMonAn = createCleanButton("Thêm món ăn", 552, 28, 137, 28, 16, false);
         btnThemMonAn.addActionListener(e -> moPanelThemMonAn());
-        panel_2.add(btnThemMonAn);
-
-        // TẢI DỮ LIỆU + TÍNH SỐ LƯỢNG BÁN (CHUẨN NHƯ THỐNG KÊ)
-        loadMonAnFromDB();
-        tinhSoLuongBanCacMon(); // Tính số lượng bán để sắp xếp "Phổ biến"
+        panelBottom.add(btnThemMonAn);
     }
 
-    // TÍNH SỐ LƯỢNG BÁN CỦA TỪNG MÓN (GIỐNG HỆT ManHinhThongKeMonAn)
+    // Button sạch sẽ, bo góc nhẹ
+    private JButton createCleanButton(String text, int x, int y, int w, int h, int fontSize, boolean bold) {
+        JButton btn = new JButton(text);
+        btn.setBounds(x, y, w, h);
+        btn.setFont(new Font("Segoe UI", bold ? Font.BOLD : Font.PLAIN, fontSize));
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(180, 180, 180), 1, true),
+                new EmptyBorder(5, 10, 5, 10)));
+        btn.setFocusPainted(false);
+        btn.setBackground(Color.WHITE);
+        return btn;
+    }
+
+    private ImageIcon resizeIcon(String path, int w, int h) {
+        try {
+            ImageIcon icon = new ImageIcon(path);
+            Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            return new ImageIcon(img);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // Card món ăn đẹp, sạch, hiện đại
+    private void themDuLieuVaoPanelCenterCenter(List<MonAn> listMonAn) {
+        panelCenterCenter.removeAll();
+
+        for (MonAn mon : listMonAn) {
+            JPanel card = new JPanel(null);
+            card.setPreferredSize(new Dimension(996, 160));
+            card.setBackground(Color.WHITE);
+            card.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(new Color(220, 220, 220), 1),
+                    new EmptyBorder(15, 15, 15, 15)));
+
+            // Hình ảnh
+            JLabel lblHinh = new JLabel();
+            lblHinh.setBounds(0, 0, 235, 130);
+            lblHinh.setBorder(new LineBorder(new Color(200, 200, 200)));
+            try {
+                ImageIcon icon = new ImageIcon(mon.getHinhAnh());
+                Image img = icon.getImage().getScaledInstance(235, 130, Image.SCALE_SMOOTH);
+                lblHinh.setIcon(new ImageIcon(img));
+            } catch (Exception ex) {
+                lblHinh.setText("No Image");
+                lblHinh.setHorizontalAlignment(SwingConstants.CENTER);
+                lblHinh.setForeground(Color.GRAY);
+            }
+            card.add(lblHinh);
+
+            // Thông tin
+            JLabel lblMaMon = new JLabel(mon.getMaMon());
+            lblMaMon.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+            lblMaMon.setBounds(260, 10, 100, 20);
+            card.add(lblMaMon);
+
+            JLabel lblTenMon = new JLabel(mon.getTenMon());
+            lblTenMon.setFont(new Font("Segoe UI", Font.BOLD, 18));
+            lblTenMon.setBounds(260, 35, 300, 30);
+            card.add(lblTenMon);
+
+            JLabel lblGia = new JLabel(df.format(mon.getGia()));
+            lblGia.setFont(new Font("Segoe UI", Font.BOLD, 24));
+            lblGia.setBounds(260, 70, 200, 35);
+            card.add(lblGia);
+
+            String tenLoai = monAnDAO.chuyenDoiMaLoaiSangTen(mon.getLoaiMon());
+            JLabel lblLoai = new JLabel("Loại: " + tenLoai);
+            lblLoai.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            lblLoai.setBounds(570, 15, 200, 25);
+            card.add(lblLoai);
+
+            if (mon.getSoLuong() > 0) {
+                JLabel lblTon = new JLabel("Số lượng tồn: " + mon.getSoLuong());
+                lblTon.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                lblTon.setForeground(mon.getSoLuong() < 10 ? Color.RED : Color.BLACK);
+                lblTon.setBounds(570, 40, 150, 25);
+                card.add(lblTon);
+            }
+
+            String moTa = mon.getMoTa() != null && !mon.getMoTa().trim().isEmpty() ? mon.getMoTa() : "Không có mô tả";
+            JLabel lblMoTa = new JLabel("<html><div width='380'>" + moTa + "</div></html>");
+            lblMoTa.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+            lblMoTa.setForeground(Color.GRAY);
+            lblMoTa.setBounds(570, 70, 400, 60);
+            card.add(lblMoTa);
+
+            panelCenterCenter.add(card);
+            panelCenterCenter.add(Box.createVerticalStrut(8));
+        }
+
+        panelCenterCenter.revalidate();
+        panelCenterCenter.repaint();
+    }
+
+    // ==================== CÁC HÀM XỬ LÝ (GIỮ NGUYÊN 100%) ====================
     private void tinhSoLuongBanCacMon() {
         soLuongBanMap.clear();
         List<HoaDon> dsHoaDon = hoaDonDAO.timHoaDonTheoTrangThai("Đã thanh toán");
@@ -244,134 +294,37 @@ public class TraCuuMonAn extends JPanel {
         }
     }
 
-    // SỬA CHỈ PHẦN NÀY: "PHỔ BIẾN" = BÁN NHIỀU NHẤT
     private void sapXepTheoDoPhoBien() {
         if (danhSachMonAnHienTai != null) {
-            danhSachMonAnHienTai.sort((a, b) -> {
-                int slA = soLuongBanMap.getOrDefault(a.getMaMon(), 0);
-                int slB = soLuongBanMap.getOrDefault(b.getMaMon(), 0);
-                return Integer.compare(slB, slA); // Giảm dần → bán nhiều nhất đứng trước
-            });
+            danhSachMonAnHienTai.sort((a, b) -> Integer.compare(
+                    soLuongBanMap.getOrDefault(b.getMaMon(), 0),
+                    soLuongBanMap.getOrDefault(a.getMaMon(), 0)));
             themDuLieuVaoPanelCenterCenter(danhSachMonAnHienTai);
         }
     }
 
-    // Các hàm còn lại giữ nguyên 100% như file gốc của bạn
     private void loadMonAnFromDB() {
         new Thread(() -> {
             List<MonAn> all = monAnDAO.getAllMonAn();
-            listGoc = all;
+            listGoc = new ArrayList<>(all);
             danhSachMonAnHienTai = new ArrayList<>(all);
             SwingUtilities.invokeLater(() -> themDuLieuVaoPanelCenterCenter(danhSachMonAnHienTai));
         }).start();
     }
 
-    private void themDuLieuVaoPanelCenterCenter(List<MonAn> listMonAn) {
-        panelCenterCenter.removeAll();
-        for (MonAn mon : listMonAn) {
-            JPanel panelMonAn = new JPanel();
-            panelMonAn.setLayout(null);
-            panelMonAn.setPreferredSize(new Dimension(996, 160));
-            panelMonAn.setBorder(BorderFactory.createLineBorder(Color.black));
-
-            JLabel lblHinh = new JLabel();
-            try {
-                String imgPath = mon.getHinhAnh();
-                ImageIcon icon = new ImageIcon(imgPath);
-                Image img = icon.getImage().getScaledInstance(235, 130, Image.SCALE_SMOOTH);
-                lblHinh.setIcon(new ImageIcon(img));
-            } catch (Exception ex) {
-                lblHinh.setText("No Image");
-            }
-            lblHinh.setBorder(new LineBorder(Color.BLACK));
-            lblHinh.setBounds(22, 11, 235, 130);
-            panelMonAn.add(lblHinh);
-
-            JLabel lblMaMon = new JLabel(mon.getMaMon());
-            lblMaMon.setFont(new Font("Segoe UI", Font.ITALIC, 14));
-            lblMaMon.setBounds(307, 30, 56, 26);
-            panelMonAn.add(lblMaMon);
-
-            JLabel lblTenMon = new JLabel(mon.getTenMon());
-            lblTenMon.setFont(new Font("Segoe UI", Font.BOLD, 16));
-            lblTenMon.setBounds(307, 59, 189, 26);
-            panelMonAn.add(lblTenMon);
-
-            JLabel lblGia = new JLabel(df.format(mon.getGia()));
-            lblGia.setFont(new Font("Segoe UI", Font.BOLD, 23));
-            lblGia.setBounds(309, 96, 150, 26);
-            panelMonAn.add(lblGia);
-
-            JLabel lblLoaiLabel = new JLabel("Loại:");
-            lblLoaiLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            lblLoaiLabel.setBounds(570, 30, 36, 26);
-            panelMonAn.add(lblLoaiLabel);
-
-            String tenLoai = monAnDAO.chuyenDoiMaLoaiSangTen(mon.getLoaiMon());
-            JLabel lblLoaiData = new JLabel(tenLoai);
-            lblLoaiData.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            lblLoaiData.setBounds(617, 30, 150, 26);
-            panelMonAn.add(lblLoaiData);
-
-            JLabel lblSoLuongTon = new JLabel("Số lượng tồn:");
-            lblSoLuongTon.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            lblSoLuongTon.setBounds(727, 30, 86, 26);
-
-            JLabel lblSoLuongTonData = new JLabel(String.valueOf(mon.getSoLuong()));
-            lblSoLuongTonData.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-            lblSoLuongTonData.setBounds(823, 30, 36, 26);
-
-            if (mon.getSoLuong() != 0) {
-                panelMonAn.add(lblSoLuongTon);
-                panelMonAn.add(lblSoLuongTonData);
-            }
-
-            String moTa = mon.getMoTa() != null ? mon.getMoTa() : "Không có mô tả";
-            JLabel lblMoTa = new JLabel("<html><i>" + moTa + "</i></html>");
-            lblMoTa.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-            lblMoTa.setForeground(Color.DARK_GRAY);
-            lblMoTa.setBounds(570, 60, 400, 60);
-            panelMonAn.add(lblMoTa);
-
-            panelCenterCenter.add(panelMonAn);
-        }
-        panelCenterCenter.revalidate();
-        panelCenterCenter.repaint();
-    }
-
-    private void filterAndDisplay(String loaiLoc, String giaTriLoc) {
-        if (listGoc == null) return;
-        List<MonAn> danhSachLoc = new ArrayList<>();
-        for (MonAn mon : listGoc) {
-            boolean hopLe = false;
-            switch (loaiLoc) {
-                case "tatca" -> hopLe = true;
-                case "loaimon" -> hopLe = mon.getLoaiMon().equalsIgnoreCase(giaTriLoc);
-                case "tukhoa" -> hopLe = mon.getTenMon().toLowerCase().contains(giaTriLoc.toLowerCase());
-            }
-            if (hopLe) {
-                danhSachLoc.add(mon);
-            }
-        }
-        danhSachMonAnHienTai = danhSachLoc;
-        themDuLieuVaoPanelCenterCenter(danhSachMonAnHienTai);
-    }
-
     private void timKiemBangTuKhoa(String keyword) {
         if (listGoc == null) return;
-        List<MonAn> ketQuaTimKiem = new ArrayList<>();
+        List<MonAn> ketQua = new ArrayList<>();
         if (keyword == null || keyword.trim().isEmpty()) {
-            ketQuaTimKiem.addAll(listGoc);
+            ketQua.addAll(listGoc);
         } else {
-            String tuKhoa = keyword.toLowerCase();
+            String tk = keyword.toLowerCase();
             for (MonAn mon : listGoc) {
-                if (mon.getTenMon().toLowerCase().contains(tuKhoa)) {
-                    ketQuaTimKiem.add(mon);
-                }
+                if (mon.getTenMon().toLowerCase().contains(tk)) ketQua.add(mon);
             }
         }
-        danhSachMonAnHienTai = ketQuaTimKiem;
-        themDuLieuVaoPanelCenterCenter(danhSachMonAnHienTai);
+        danhSachMonAnHienTai = ketQua;
+        themDuLieuVaoPanelCenterCenter(ketQua);
     }
 
     private void sapXepTheoGiaTangDan() {
@@ -395,31 +348,39 @@ public class TraCuuMonAn extends JPanel {
         }
     }
 
+    private void locTatCaDanhMuc() { loadMonAnFromDB(); }
     private void locTheoMonAnChinh() { filterAndDisplay("loaimon", "MC"); }
     private void locTheoDoUong() { filterAndDisplay("loaimon", "DO"); }
     private void locTheoMonAnKem() { filterAndDisplay("loaimon", "MK"); }
-    private void locTatCaDanhMuc() { loadMonAnFromDB(); }
     private void locTheoTuKhoa(String keyword) { filterAndDisplay("tukhoa", keyword); }
 
-    private void locMonKhac(String loai, List<String> tenMonDaCo) {
+    private void filterAndDisplay(String loaiLoc, String giaTriLoc) {
         if (listGoc == null) return;
-        List<MonAn> ketQuaLoc = new ArrayList<>();
+        List<MonAn> loc = new ArrayList<>();
+        for (MonAn mon : listGoc) {
+            boolean ok = switch (loaiLoc) {
+                case "tatca" -> true;
+                case "loaimon" -> mon.getLoaiMon().equalsIgnoreCase(giaTriLoc);
+                case "tukhoa" -> mon.getTenMon().toLowerCase().contains(giaTriLoc.toLowerCase());
+                default -> false;
+            };
+            if (ok) loc.add(mon);
+        }
+        danhSachMonAnHienTai = loc;
+        themDuLieuVaoPanelCenterCenter(loc);
+    }
+
+    private void locMonKhac(String loai, List<String> tenDaCo) {
+        if (listGoc == null) return;
+        List<MonAn> ketQua = new ArrayList<>();
         for (MonAn mon : listGoc) {
             if (mon.getLoaiMon().equalsIgnoreCase(loai)) {
-                boolean daCo = false;
-                for (String ten : tenMonDaCo) {
-                    if (mon.getTenMon().contains(ten)) {
-                        daCo = true;
-                        break;
-                    }
-                }
-                if (!daCo) {
-                    ketQuaLoc.add(mon);
-                }
+                boolean co = tenDaCo.stream().anyMatch(s -> mon.getTenMon().contains(s));
+                if (!co) ketQua.add(mon);
             }
         }
-        danhSachMonAnHienTai = ketQuaLoc;
-        themDuLieuVaoPanelCenterCenter(danhSachMonAnHienTai);
+        danhSachMonAnHienTai = ketQua;
+        themDuLieuVaoPanelCenterCenter(ketQua);
     }
 
     private void moPanelThemMonAn() {

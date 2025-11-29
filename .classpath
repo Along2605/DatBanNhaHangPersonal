@@ -21,5 +21,6 @@
 	<classpathentry kind="lib" path="lib/log4j-core-2.23.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-compress-1.26.0.jar"/>
 	<classpathentry kind="lib" path="lib/LGoodDatePicker-11.2.1.jar"/>
+	<classpathentry kind="lib" path="C:/S1(2025-2016)/PTUD/DatBanNhaHang/lib/itext-2.1.7.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
