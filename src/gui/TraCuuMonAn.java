@@ -44,7 +44,7 @@ public class TraCuuMonAn extends JPanel {
 
     private void initUI() {
         // Tiêu đề
-        JLabel lblTieuDe = new JLabel("Danh sách các món ăn đang kinh doanh");
+        JLabel lblTieuDe = new JLabel("Danh sách món ăn");
         lblTieuDe.setBounds(443, 35, 455, 32);
         lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 26));
         add(lblTieuDe);

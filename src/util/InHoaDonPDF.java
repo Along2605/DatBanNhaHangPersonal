@@ -62,7 +62,7 @@ public class InHoaDonPDF {
             Font bigBold = new Font(bf, 14, Font.BOLD);
 
             // Tiêu đề
-            Paragraph title = new Paragraph("HÓA ĐƠN THANH TOÁN SEOUL CUISINE", titleFont);
+            Paragraph title = new Paragraph(" SEOUL CUISINE\nHÓA ĐƠN THANH TOÁN", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             title.setSpacingAfter(8);
             document.add(title);
@@ -71,7 +71,7 @@ public class InHoaDonPDF {
             sub.setAlignment(Element.ALIGN_CENTER);
             document.add(sub);
 
-            document.add(new Paragraph("Địa chỉ: 12 Nguyễn Văn Bảo, P. Hành Thông, Q. Gò Vấp, TP. Hồ Chí Minh", normalFont));
+            document.add(new Paragraph("Địa chỉ: 12 Nguyễn Văn Bảo, P. Hạnh Thông, Q. Gò Vấp, TP. Hồ Chí Minh", normalFont));
             document.add(new Paragraph("Điện thoại: (028) 3888 9999      Email: contact@seoulcuisine.vn", normalFont));
             document.add(new Paragraph("Mã số Thuế: 0303888999", normalFont));
             document.add(new Paragraph(" "));
@@ -117,18 +117,11 @@ public class InHoaDonPDF {
             document.add(new Paragraph("TỔNG CỘNG:                                 " + df.format(hoaDon.getTongTien()) + " đ", bigBold));
             document.add(new Paragraph(" "));
 
-            document.add(new Paragraph("PHƯƠNG THỨC THANH TOÁN", headerFont));
-            document.add(new Paragraph("Tiền mặt    Thẻ    Chuyển khoản", normalFont));
-            document.add(new Paragraph(" "));
-
-            Paragraph camOn = new Paragraph("LỜI CẢM ƠN", headerFont);
-            camOn.setAlignment(Element.ALIGN_CENTER);
-            document.add(camOn);
-
+          
             Paragraph loiCamOn = new Paragraph(
-                "Cảm ơn quý khách đã ghé thăm Seoul Cuisine!\n" +
+                "\nCảm ơn quý khách đã ghé thăm Seoul Cuisine!\n" +
                 "Vui lòng kiểm tra hóa đơn trước khi rời khỏi quầy.\n" +
-                "Hóa đơn không có giá trị quy đổi thành tiền mặt.", normalFont);
+                "Hóa đơn không có giá trị quy đổi thành tiền mặt.", headerFont);
             loiCamOn.setAlignment(Element.ALIGN_CENTER);
             document.add(loiCamOn);
 
