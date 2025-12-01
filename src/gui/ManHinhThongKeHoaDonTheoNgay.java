@@ -105,11 +105,6 @@ public class ManHinhThongKeHoaDonTheoNgay extends JPanel {
         btnXuatExcel.setFocusPainted(false);
         contentPane.add(btnXuatExcel);
         
-        JButton btnInHoaDon = createButton("In hóa đơn", 617, 542, e -> hienThiDialogChonHoaDon());
-        btnInHoaDon.setBackground(new Color(231, 76, 60));
-        btnInHoaDon.setForeground(Color.WHITE);
-        contentPane.add(btnInHoaDon);
-        
         // === TỔNG HỢP ===
         JLabel lblTongHD = new JLabel("Tổng số hóa đơn");
         lblTongHD.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -125,6 +120,16 @@ public class ManHinhThongKeHoaDonTheoNgay extends JPanel {
         textFieldTongTienHoaDon = createTextField(863, 205);
         contentPane.add(textFieldTongSoHoaDon);
         contentPane.add(textFieldTongTienHoaDon);
+        
+        // === NÚT IN HÓA ĐƠN (Ở TRÊN BÊN PHẢI) ===
+        JButton btnInHoaDon = new JButton("In hóa đơn");
+        btnInHoaDon.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnInHoaDon.setBounds(1043, 174, 150, 51);
+        btnInHoaDon.setBackground(new Color(231, 76, 60));
+        btnInHoaDon.setForeground(Color.WHITE);
+        btnInHoaDon.setFocusPainted(false);
+        btnInHoaDon.addActionListener(e -> hienThiDialogChonHoaDon());
+        contentPane.add(btnInHoaDon);
         
         // === BẢNG ===
         JPanel panelTable = new JPanel();
@@ -155,8 +160,10 @@ public class ManHinhThongKeHoaDonTheoNgay extends JPanel {
             capNhatToanBo(selected);
         });
         
-        // Khởi tạo mặc định
-        capNhatToanBo(LocalDate.now());
+        // Khởi tạo mặc định - tự động thống kê ngày được chọn ban đầu
+        LocalDate ngayKhoiTao = datePicker.getDate() != null ? datePicker.getDate() : LocalDate.now();
+        this.ngayChon = ngayKhoiTao;
+        capNhatToanBo(ngayKhoiTao);
     }
     
     // ============================== DIALOG CHỌN HÓA ĐƠN ==============================
@@ -170,6 +177,7 @@ public class ManHinhThongKeHoaDonTheoNgay extends JPanel {
         String khungGio = (String) model.getValueAt(row, 0);
         List<HoaDon> dsHD = HoaDonDAO.layDanhSachHoaDonTheoNgay(ngayChon)
                 .stream()
+                .filter(hd -> hd.getTrangThai().equalsIgnoreCase("Đã thanh toán"))
                 .filter(hd -> layKhungGio(hd.getNgayLapHoaDon().getHour()).equals(khungGio))
                 .toList();
         
@@ -242,9 +250,13 @@ public class ManHinhThongKeHoaDonTheoNgay extends JPanel {
     
     private void capNhatToanBo(LocalDate ngay) {
         List<HoaDon> ds = HoaDonDAO.layDanhSachHoaDonTheoNgay(ngay);
-        Map<String, double[]> ketQua = ds.isEmpty() ? new HashMap<>() : tinhToanTheoKhungGio(ds);
+        // Lọc chỉ lấy hóa đơn đã thanh toán
+        List<HoaDon> dsThanhToan = ds.stream()
+                .filter(hd -> hd.getTrangThai().equalsIgnoreCase("Đã thanh toán"))
+                .toList();
+        Map<String, double[]> ketQua = dsThanhToan.isEmpty() ? new HashMap<>() : tinhToanTheoKhungGio(dsThanhToan);
         this.mapHienTai = ketQua;
-        capNhatThongKe(ds, ketQua);
+        capNhatThongKe(dsThanhToan, ketQua);
         capNhatBieuDo(ketQua, ngay);
         capNhatBang(ketQua);
     }
@@ -321,6 +333,7 @@ public class ManHinhThongKeHoaDonTheoNgay extends JPanel {
         String khungGio = (String) model.getValueAt(row, 0);
         List<HoaDon> ds = HoaDonDAO.layDanhSachHoaDonTheoNgay(ngayChon)
                 .stream()
+                .filter(hd -> hd.getTrangThai().equalsIgnoreCase("Đã thanh toán"))
                 .filter(hd -> layKhungGio(hd.getNgayLapHoaDon().getHour()).equals(khungGio))
                 .toList();
         
@@ -494,8 +507,8 @@ class DialogChonHoaDonIn extends JDialog {
         panelBottom.add(btnBoChon);
         panelBottom.add(btnIn);
         panelBottom.add(btnDong);
-        add(panelBottom, BorderLayout.SOUTH);
     }
+        
     
     private void inCacHoaDonDaChon() {
         java.util.List<HoaDon> dsCanIn = new java.util.ArrayList<>();

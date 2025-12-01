@@ -38,7 +38,7 @@ public class InHoaDonPDF {
             return;
         }
 
-        JFileChooser fc = new JFileChooser();
+        JFileChooser fc = new JFileChooser("note");
         fc.setSelectedFile(new File("HoaDon_" + hoaDon.getMaHoaDon() + ".pdf"));
         if (fc.showSaveDialog(null) != JFileChooser.APPROVE_OPTION) {
             return;
