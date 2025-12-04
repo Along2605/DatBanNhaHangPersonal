@@ -45,14 +45,13 @@ public class TraCuuMonAn extends JPanel {
     private void initUI() {
         // Tiêu đề
         JLabel lblTieuDe = new JLabel("Danh sách món ăn");
-        lblTieuDe.setBounds(443, 35, 455, 32);
+        lblTieuDe.setBounds(550, 0, 455, 100);
         lblTieuDe.setFont(new Font("Segoe UI", Font.BOLD, 26));
         add(lblTieuDe);
 
         // ==================== PANEL TRÁI - DANH MỤC ====================
         JPanel panelWest = new JPanel();
         panelWest.setBounds(10, 108, 246, 517);
-        panelWest.setBackground(Color.WHITE);
         panelWest.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(200, 200, 200), 1),
                 new EmptyBorder(15, 15, 15, 15)));
@@ -106,14 +105,12 @@ public class TraCuuMonAn extends JPanel {
         // ==================== PANEL GIỮA ====================
         JPanel panelCenter = new JPanel();
         panelCenter.setBounds(266, 78, 1100, 457);
-        panelCenter.setBackground(Color.WHITE);
         panelCenter.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         panelCenter.setLayout(null);
         add(panelCenter);
 
         JPanel panelCenterNorth = new JPanel();
         panelCenterNorth.setBounds(28, 11, 1044, 96);
-        panelCenterNorth.setBackground(Color.WHITE);
         panelCenterNorth.setLayout(null);
         panelCenter.add(panelCenterNorth);
 
@@ -145,7 +142,6 @@ public class TraCuuMonAn extends JPanel {
         // Khu vực hiển thị món
         panelCenterCenter = new JPanel();
         panelCenterCenter.setLayout(new BoxLayout(panelCenterCenter, BoxLayout.Y_AXIS));
-        panelCenterCenter.setBackground(Color.WHITE);
 
         JScrollPane scrollPane = new JScrollPane(panelCenterCenter);
         scrollPane.setBounds(76, 118, 996, 379);
@@ -156,7 +152,6 @@ public class TraCuuMonAn extends JPanel {
         // ==================== PANEL DƯỚI - TÌM KIẾM ====================
         JPanel panelBottom = new JPanel();
         panelBottom.setBounds(276, 546, 1090, 77);
-        panelBottom.setBackground(Color.WHITE);
         panelBottom.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(200, 200, 200)),
                 new EmptyBorder(15, 15, 15, 15)));
@@ -175,6 +170,7 @@ public class TraCuuMonAn extends JPanel {
 
         JButton btnTimKiem = new JButton();
         btnTimKiem.setBounds(431, 27, 47, 28);
+        btnTimKiem.setBorder(BorderFactory.createLineBorder(Color.black));
         btnTimKiem.setIcon(resizeIcon("img/search.png", 20, 20));
         btnTimKiem.setBorderPainted(false);
         btnTimKiem.setContentAreaFilled(false);
@@ -196,7 +192,6 @@ public class TraCuuMonAn extends JPanel {
                 new LineBorder(new Color(180, 180, 180), 1, true),
                 new EmptyBorder(5, 10, 5, 10)));
         btn.setFocusPainted(false);
-        btn.setBackground(Color.WHITE);
         return btn;
     }
 
@@ -217,7 +212,6 @@ public class TraCuuMonAn extends JPanel {
         for (MonAn mon : listMonAn) {
             JPanel card = new JPanel(null);
             card.setPreferredSize(new Dimension(996, 160));
-            card.setBackground(Color.WHITE);
             card.setBorder(BorderFactory.createCompoundBorder(
                     new LineBorder(new Color(220, 220, 220), 1),
                     new EmptyBorder(15, 15, 15, 15)));

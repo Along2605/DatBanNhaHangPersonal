@@ -708,7 +708,7 @@ public class ManHinhDatMon extends JPanel {
                     double thanhTienMoi = soLuongMoi * mon.getGia();
                     cthd.setSoLuong(soLuongMoi);
                     cthd.setThanhTien(thanhTienMoi);
-                    cthdDAO.capNhatChiTietHoaDon(cthd);
+                    cthdDAO.capNhatChiTietHoaDon(cthd, Session.getMaNhanVienDangNhap());
                 } else {
                     cthd = new ChiTietHoaDon();
                     cthd.setHoaDon(hoaDon);
@@ -717,7 +717,7 @@ public class ManHinhDatMon extends JPanel {
                     cthd.setDonGia(mon.getGia());
                     cthd.setThanhTien(mon.getGia() * mon.getSoLuong());
                     cthd.setGhiChu(null);
-                    cthdDAO.themChiTietHoaDon(cthd);
+                    cthdDAO.themChiTietHoaDon(cthd, Session.getMaNhanVienDangNhap());
                 }
             }
 

@@ -359,7 +359,7 @@ public class ManHinhThongKeMonAn extends JPanel {
         top5MonAn.clear();
 
         if (duLieuThongKe.isEmpty()) {
-            dataset.setValue("Chưa có dữ liệu", 100);
+           
         } else {
             List<Map<String, Object>> sorted = new ArrayList<>(duLieuThongKe);
             sapXep(sorted);
@@ -430,10 +430,7 @@ public class ManHinhThongKeMonAn extends JPanel {
         container.removeAll();
 
         if (top5MonAn.isEmpty()) {
-            JLabel lbl = new JLabel("Không có dữ liệu", SwingConstants.CENTER);
-            lbl.setForeground(Color.GRAY);
-            lbl.setFont(new Font("Segoe UI", Font.ITALIC, 15));
-            container.add(lbl);
+            
         } else {
             int rank = 1;
             for (Map<String, Object> m : top5MonAn) {

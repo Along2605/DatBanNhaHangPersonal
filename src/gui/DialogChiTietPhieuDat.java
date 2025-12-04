@@ -638,7 +638,7 @@ public class DialogChiTietPhieuDat extends JDialog{
                 cthd.setThanhTien(ctpd.getSoLuong() * ctpd.getDonGia());
                 cthd.setGhiChu(ctpd.getGhiChu());
 
-                if (!cthdDAO.themChiTietHoaDon(cthd)) {
+                if (!cthdDAO.themChiTietHoaDon(cthd, Session.getMaNhanVienDangNhap())) {
                     throw new Exception("Không thể thêm chi tiết hóa đơn cho món: " 
                         + ctpd.getMonAn().getTenMon());
                 }

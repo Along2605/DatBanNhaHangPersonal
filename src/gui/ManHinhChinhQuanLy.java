@@ -240,7 +240,7 @@ public class ManHinhChinhQuanLy extends JFrame {
             menu.add(createMenuItem("Cập nhật", e -> showPanel(new ManHinhCapNhatNhanVien())));
             menu.add(createMenuItem("Nhật ký hoạt động", e -> showPanel(new ManHinhNhatKyNhanVien())));
             
-            menu.add(createMenuItem("Thống kê", null));
+            menu.add(createMenuItem("Thống kê", e -> showPanel(new ManHinhThongKeNhanVien())));
             return menu;
         }
 

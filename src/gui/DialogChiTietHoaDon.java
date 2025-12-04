@@ -750,7 +750,7 @@ public class DialogChiTietHoaDon extends JDialog {
             // ✅ XÓA TỪ DATABASE
             boolean success = chiTietHoaDonDAO.xoaChiTietHoaDon(
                 hoaDon.getMaHoaDon(), 
-                cthdCanXoa.getMonAn().getMaMon()
+                cthdCanXoa.getMonAn().getMaMon(), Session.getMaNhanVienDangNhap()
             );
             
             if (success) {

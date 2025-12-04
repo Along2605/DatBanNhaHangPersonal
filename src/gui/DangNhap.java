@@ -161,8 +161,8 @@ public class DangNhap extends JFrame implements ActionListener{
 
      btnLogin.addActionListener(this);
         mainPanel.add(rightPanel);
-              
-            
+         
+  
     }
     
 
