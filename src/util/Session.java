@@ -30,4 +30,14 @@ public class Session {
     public static void logout() {
         nhanVienDangNhap = null;
     }
+    
+    // cap nhat
+    public static void capNhatNhanVien(NhanVien nvUpdated) {
+        if (nvUpdated == null) {
+            return;
+        }
+        if (nhanVienDangNhap != null && nhanVienDangNhap.getMaNV().equals(nvUpdated.getMaNV())) {
+            nhanVienDangNhap = nvUpdated;
+        }
+    }
 }

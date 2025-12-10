@@ -507,6 +507,7 @@ class DialogChonHoaDonIn extends JDialog {
         panelBottom.add(btnBoChon);
         panelBottom.add(btnIn);
         panelBottom.add(btnDong);
+        add(panelBottom, BorderLayout.SOUTH);
     }
         
     

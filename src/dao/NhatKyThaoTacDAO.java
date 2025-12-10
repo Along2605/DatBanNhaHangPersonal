@@ -21,7 +21,31 @@ public class NhatKyThaoTacDAO {
         return instance;
     }
     
-    // ===== GHI LOG CHUNG =====
+    // ============================================================
+    // ✅ GHI LOG CHUNG - OVERLOAD NHẬN CONNECTION (CHO TRANSACTION)
+    // ============================================================
+    public boolean ghiLog(Connection con, NhatKyThaoTac log) {
+        String sql = "INSERT INTO NhatKyThaoTac (maNV, loaiThaoTac, tenBang, " +
+                     "maDoiTuong, noiDungCu, noiDungMoi, thoiGian, ghiChu) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, log.getMaNV());
+            ps.setString(2, log.getLoaiThaoTac().getValue());
+            ps.setString(3, log.getTenBang());
+            ps.setString(4, log.getMaDoiTuong());
+            ps.setString(5, log.getNoiDungCu());
+            ps.setString(6, log.getNoiDungMoi());
+            ps.setTimestamp(7, Timestamp.valueOf(log.getThoiGian()));
+            ps.setString(8, log.getGhiChu());
+            
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    // ✅ GHI LOG CHUNG - METHOD CŨ (GIỮ LẠI ĐỂ TƯƠNG THÍCH)
     public boolean ghiLog(NhatKyThaoTac log) {
         String sql = "INSERT INTO NhatKyThaoTac (maNV, loaiThaoTac, tenBang, " +
                      "maDoiTuong, noiDungCu, noiDungMoi, thoiGian, ghiChu) " +
@@ -45,11 +69,20 @@ public class NhatKyThaoTacDAO {
         }
     }
     
-    // ===== CÁC HÀM TIỆN ÍCH GHI LOG =====
+    // ============================================================
+    // ✅ LOG THÊM - OVERLOAD NHẬN CONNECTION
+    // ============================================================
+    public void logThem(Connection con, String maNV, Loggable doiTuong, String ghiChu) {
+        NhatKyThaoTac log = new NhatKyThaoTac(
+            maNV, LoaiThaoTac.THEM,
+            doiTuong.getTenBang(), doiTuong.getMaDoiTuong()
+        );
+        log.setNoiDungMoi(doiTuong.toLogString());
+        log.setGhiChu(ghiChu);
+        ghiLog(con, log);
+    }
     
-    /**
-     * Ghi log khi THÊM đối tượng
-     */
+    // ✅ LOG THÊM - METHOD CŨ
     public void logThem(String maNV, Loggable doiTuong, String ghiChu) {
         NhatKyThaoTac log = new NhatKyThaoTac(
             maNV, LoaiThaoTac.THEM,
@@ -60,9 +93,22 @@ public class NhatKyThaoTacDAO {
         ghiLog(log);
     }
     
-    /**
-     * Ghi log khi SỬA đối tượng
-     */
+    // ============================================================
+    // ✅ LOG SỬA - OVERLOAD NHẬN CONNECTION
+    // ============================================================
+    public void logSua(Connection con, String maNV, Loggable doiTuongCu, 
+                       Loggable doiTuongMoi, String ghiChu) {
+        NhatKyThaoTac log = new NhatKyThaoTac(
+            maNV, LoaiThaoTac.SUA,
+            doiTuongMoi.getTenBang(), doiTuongMoi.getMaDoiTuong()
+        );
+        log.setNoiDungCu(doiTuongCu.toLogString());
+        log.setNoiDungMoi(doiTuongMoi.toLogString());
+        log.setGhiChu(ghiChu);
+        ghiLog(con, log);
+    }
+    
+    // ✅ LOG SỬA - METHOD CŨ
     public void logSua(String maNV, Loggable doiTuongCu, 
                        Loggable doiTuongMoi, String ghiChu) {
         NhatKyThaoTac log = new NhatKyThaoTac(
@@ -75,9 +121,20 @@ public class NhatKyThaoTacDAO {
         ghiLog(log);
     }
     
-    /**
-     * Ghi log khi XÓA đối tượng
-     */
+    // ============================================================
+    // ✅ LOG XÓA - OVERLOAD NHẬN CONNECTION
+    // ============================================================
+    public void logXoa(Connection con, String maNV, Loggable doiTuong, String ghiChu) {
+        NhatKyThaoTac log = new NhatKyThaoTac(
+            maNV, LoaiThaoTac.XOA,
+            doiTuong.getTenBang(), doiTuong.getMaDoiTuong()
+        );
+        log.setNoiDungCu(doiTuong.toLogString());
+        log.setGhiChu(ghiChu);
+        ghiLog(con, log);
+    }
+    
+    // ✅ LOG XÓA - METHOD CŨ
     public void logXoa(String maNV, Loggable doiTuong, String ghiChu) {
         NhatKyThaoTac log = new NhatKyThaoTac(
             maNV, LoaiThaoTac.XOA,
@@ -88,9 +145,22 @@ public class NhatKyThaoTacDAO {
         ghiLog(log);
     }
     
-    /**
-     * Ghi log đơn giản (không cần entity implement Loggable)
-     */
+    // ============================================================
+    // ✅ LOG ĐƠN GIẢN - OVERLOAD NHẬN CONNECTION (QUAN TRỌNG!)
+    // ============================================================
+    public void logDonGian(Connection con, String maNV, LoaiThaoTac loai, String tenBang,
+                           String maDoiTuong, String noiDung, String ghiChu) {
+        NhatKyThaoTac log = new NhatKyThaoTac(maNV, loai, tenBang, maDoiTuong);
+        if (loai == LoaiThaoTac.THEM || loai == LoaiThaoTac.SUA) {
+            log.setNoiDungMoi(noiDung);
+        } else {
+            log.setNoiDungCu(noiDung);
+        }
+        log.setGhiChu(ghiChu);
+        ghiLog(con, log);
+    }
+    
+    // ✅ LOG ĐƠN GIẢN - METHOD CŨ (GIỮ LẠI ĐỂ TƯƠNG THÍCH)
     public void logDonGian(String maNV, LoaiThaoTac loai, String tenBang,
                            String maDoiTuong, String noiDung, String ghiChu) {
         NhatKyThaoTac log = new NhatKyThaoTac(maNV, loai, tenBang, maDoiTuong);

@@ -443,10 +443,6 @@ select * from ChiTietPhieuDat
 select * from HoaDon
 select * from ChiTietHoaDon
 
-UPDATE MonAn
-SET soluong = 0
-WHERE maMon not LIKE 'DO%';
-
 select * from KhachHang
 
 
@@ -491,3 +487,34 @@ FROM NhatKyThaoTac n
 LEFT JOIN NhanVien nv ON n.maNV = nv.maNV;
 
 select * from NhatKyThaoTac
+
+
+GO
+
+-- Kiểm tra và thêm cột khungGio nếu chưa có
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
+               WHERE TABLE_NAME = 'PhieuDatBan' AND COLUMN_NAME = 'khungGio')
+BEGIN
+    ALTER TABLE PhieuDatBan
+    ADD khungGio INT DEFAULT 1 CHECK (khungGio BETWEEN 1 AND 4);
+    
+    PRINT N'✅ Đã thêm cột khungGio vào bảng PhieuDatBan';
+END
+ELSE
+BEGIN
+    PRINT N'⚠️ Cột khungGio đã tồn tại trong bảng PhieuDatBan';
+END
+GO
+
+-- Cập nhật giá trị mặc định cho các phiếu đã có (nếu cần)
+UPDATE PhieuDatBan
+SET khungGio = 1
+WHERE khungGio IS NULL OR khungGio = 0;
+GO
+
+use QLNH
+select * from MonAn
+
+UPDATE MonAn
+SET soluong = null
+WHERE maMon not LIKE 'DO%';

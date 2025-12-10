@@ -311,21 +311,6 @@ public class HoaDonDAO {
         }
     }
 
-    // ========== CẬP NHẬT TỔNG TIỀN ==========
-    public boolean capNhatTongTien(String maHoaDon, double tongTien) {
-        String sql = "UPDATE HoaDon SET tongTien = ? WHERE maHoaDon = ?";
-        try (Connection con = ConnectDB.getConnection();
-             PreparedStatement stmt = con.prepareStatement(sql)) {
-            
-            stmt.setDouble(1, tongTien);
-            stmt.setString(2, maHoaDon);
-            return stmt.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
 
     // ========== CẬP NHẬT KHUYẾN MÃI ==========
     public boolean capNhatKhuyenMai(String maHoaDon, String maKhuyenMai) {
@@ -600,9 +585,57 @@ public class HoaDonDAO {
 
         return null; // Không có dữ liệu
     }
+    
+ // Chuyển bàn
+ 	public boolean chuyenBan(String maHoaDon, String maBanMoi) {
+ 		String sql = "UPDATE HoaDon SET maBan = ? WHERE maHoaDon = ?";
+ 		try (Connection conn = ConnectDB.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+ 			ps.setString(1, maBanMoi);
+ 			ps.setString(2, maHoaDon);
+ 			return ps.executeUpdate() > 0;
+ 		} catch (Exception e) {
+ 			e.printStackTrace();
+ 		}
+ 		return false;
+ 	}
+ 	
+ 	//Lay maHD tu ban
+ 	public String layMaHDTuBan(String maBan) {
+         String maHD = null;
+         String sql = "SELECT maHoaDon FROM HoaDon WHERE maBan = ? AND trangThai = 'Chưa thanh toán'";
+         try (Connection conn = ConnectDB.getConnection();
+              PreparedStatement ps = conn.prepareStatement(sql)) {
+             ps.setString(1, maBan);
+             ResultSet rs = ps.executeQuery();
+             if (rs.next()) {
+                 maHD = rs.getString("maHoaDon");
+             }
+         } catch (SQLException e) {
+             e.printStackTrace();
+         }
+         return maHD;
+ 	}
+    
+ // Trong HoaDonDAO.java
 
-    
- 
-    
+ // ✅ OVERLOAD NHẬN CONNECTION (CHO TRANSACTION)
+ public void capNhatTongTien(Connection con, String maHD, double tongTien) throws SQLException {
+     String sql = "UPDATE HoaDon SET tongTien = ? WHERE maHoaDon = ?";
+     try (PreparedStatement ps = con.prepareStatement(sql)) {
+         ps.setDouble(1, tongTien);
+         ps.setString(2, maHD);
+         ps.executeUpdate();
+     }
+ }
+
+ // ✅ METHOD CŨ (GIỮ LẠI ĐỂ TƯƠNG THÍCH)
+ public void capNhatTongTien(String maHD, double tongTien) {
+     Connection con = ConnectDB.getConnection();
+     try {
+         capNhatTongTien(con, maHD, tongTien);
+     } catch (SQLException e) {
+         e.printStackTrace();
+     }
+ }
     
 }

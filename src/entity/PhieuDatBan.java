@@ -13,6 +13,7 @@ public class PhieuDatBan {
     private NhanVien nhanVien;
     private BanAn banAn;
     private LocalDateTime ngayDat;
+    private int khungGio; // 1=Sáng, 2=Trưa, 3=Chiều, 4=Tối
     private int soNguoi;
     private double soTienCoc;
     private String ghiChu;
@@ -29,6 +30,20 @@ public class PhieuDatBan {
         this.nhanVien = nhanVien;
         this.banAn = banAn;
         this.ngayDat = ngayDat;
+        this.khungGio = 0; // Default
+        this.soNguoi = soNguoi;
+        this.soTienCoc = soTienCoc;
+        this.ghiChu = ghiChu;
+        this.trangThai = trangThai;
+    }
+    
+    public PhieuDatBan(String maPhieuDat, KhachHang khachHang, NhanVien nhanVien, BanAn banAn, LocalDateTime ngayDat, int khungGio, int soNguoi, double soTienCoc, String ghiChu, String trangThai) {
+        this.maPhieuDat = maPhieuDat;
+        this.khachHang = khachHang;
+        this.nhanVien = nhanVien;
+        this.banAn = banAn;
+        this.ngayDat = ngayDat;
+        this.khungGio = khungGio;
         this.soNguoi = soNguoi;
         this.soTienCoc = soTienCoc;
         this.ghiChu = ghiChu;
@@ -64,6 +79,15 @@ public class PhieuDatBan {
     }
     public void setNgayDat(LocalDateTime ngayDat) {
         this.ngayDat = ngayDat;
+    }
+    public int getKhungGio() {
+        return khungGio;
+    }
+    public void setKhungGio(int khungGio) {
+        if (khungGio < 1 || khungGio > 4) {
+            throw new IllegalArgumentException("Khung giờ phải từ 1-4");
+        }
+        this.khungGio = khungGio;
     }
     public int getSoNguoi() {
         return soNguoi;

@@ -9,10 +9,7 @@ import entity.CaLamViec;
 import entity.NhanVien;
 
 public class NhanVienDAO {
-	
-	NhatKyThaoTacDAO dao = NhatKyThaoTacDAO.getInstance();
-	
-    public boolean themNhanVien(NhanVien nv, String maQL) {
+    public boolean themNhanVien(NhanVien nv) {
         Connection con = ConnectDB.getConnection();
         try {
 //            if (con == null || con.isClosed()) {
@@ -31,12 +28,7 @@ public class NhanVienDAO {
                 stmt.setDate(8, Date.valueOf(nv.getNgayVaoLam()));
                 stmt.setBoolean(9, nv.isTrangThai());
                 stmt.setString(10, nv.getAnhDaiDien());
-                
-                boolean result = stmt.executeUpdate() > 0;
-                if(result && maQL != null) {
-                	dao.logThem(maQL, nv, "Thêm nhân viên");
-                }
-                return result;
+                return stmt.executeUpdate() > 0;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -44,9 +36,8 @@ public class NhanVienDAO {
         return false;
     }
 
-    public boolean capNhatNhanVien(NhanVien nv, String maQL) {
+    public boolean capNhatNhanVien(NhanVien nv) {
         Connection con = ConnectDB.getConnection();
-        NhanVien nvCu = getNhanVienTheoMa(nv.getMaNV());
         try {
             String sql = "UPDATE NhanVien SET hoTen=?, ngaySinh=?, email=?, soDienThoai=?, gioiTinh=?, chucVu=?, ngayVaoLam=?, trangThai=?, anhDaiDien= ? WHERE maNV=?";
             try (PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -60,11 +51,7 @@ public class NhanVienDAO {
                 stmt.setBoolean(8, nv.isTrangThai());
                 stmt.setString(9, nv.getAnhDaiDien());
                 stmt.setString(10, nv.getMaNV());
-                boolean result = stmt.executeUpdate() > 0;
-                if(result && maQL != null) {
-                	dao.logSua(maQL, nvCu, nv, "Sửa thông tin nhân viên");
-                }
-                return result;
+                return stmt.executeUpdate() > 0;
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -45,16 +45,18 @@ public class ManHinhThongKeMonAn extends JPanel {
     private JTable table;
     private JPanel panelTop5Container;
 
-    private String loaiThoiGian = "Ngày";
-    private String giaTriThoiGian = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    private String loaiThoiGian = "Tháng";  // Mặc định là Tháng
+    private String giaTriThoiGian = "";
     private String loaiMonLoc = "Tất cả";
 
     private List<Map<String, Object>> duLieuThongKe = new ArrayList<>();
     private List<Map<String, Object>> top5MonAn = new ArrayList<>();
 
-    // Trạng thái sắp xếp: true = theo số lượng, false = theo doanh thu
-    private boolean sortTheoSoLuong = true;
-    private boolean giamDan = true;
+    // Trạng thái sắp xếp mới: cho phép lọc đồng thời
+    private boolean locTheoSoLuong = false;  // Có lọc theo số lượng không
+    private boolean locTheoDoanhThu = false; // Có lọc theo doanh thu không
+    private boolean soLuongGiamDan = true;   // Chiều sắp xếp số lượng
+    private boolean doanhThuGiamDan = true;  // Chiều sắp xếp doanh thu
 
     public ManHinhThongKeMonAn() {
         setLayout(new BorderLayout());
@@ -97,7 +99,8 @@ public class ManHinhThongKeMonAn extends JPanel {
         line1.setBackground(new Color(245, 245, 245));
         line1.add(new JLabel("Thống kê theo:"));
 
-        String[] loaiTG = {"Ngày", "Tháng", "Năm"};
+        // Chỉ còn Tháng và Năm
+        String[] loaiTG = {"Tháng", "Năm"};
         comboLoaiThoiGian = new JComboBox<>(loaiTG);
         comboLoaiThoiGian.setPreferredSize(new Dimension(120, 40));
         line1.add(comboLoaiThoiGian);
@@ -151,25 +154,27 @@ public class ManHinhThongKeMonAn extends JPanel {
         controlWrapper.add(line2);
         p.add(controlWrapper, BorderLayout.SOUTH);
 
-        // ================== SỰ KIỆN SẮP XẾP - QUAN TRỌNG NHẤT ==================
+        // ================== SỰ KIỆN SẮP XẾP MỚI - CHO PHÉP LỌC ĐỒNG THỜI ==================
         comboPhoBien.addActionListener(e -> {
             int index = comboPhoBien.getSelectedIndex();
             if (index == 0 || index == 1) {
-                sortTheoSoLuong = true;
-                giamDan = (index == 0); // 0 = Phổ biến nhất → giảm dần
-                comboDoanhThu.setSelectedIndex(2); // reset combo doanh thu
-                capNhatDuLieu();
+                locTheoSoLuong = true;
+                soLuongGiamDan = (index == 0); // 0 = Phổ biến nhất → giảm dần
+            } else {
+                locTheoSoLuong = false; // Không lọc theo số lượng
             }
+            capNhatDuLieu();
         });
 
         comboDoanhThu.addActionListener(e -> {
             int index = comboDoanhThu.getSelectedIndex();
             if (index == 0 || index == 1) {
-                sortTheoSoLuong = false;
-                giamDan = (index == 0); // 0 = Doanh thu cao nhất → giảm dần
-                comboPhoBien.setSelectedIndex(2); // reset combo phổ biến
-                capNhatDuLieu();
+                locTheoDoanhThu = true;
+                doanhThuGiamDan = (index == 0); // 0 = Doanh thu cao nhất → giảm dần
+            } else {
+                locTheoDoanhThu = false; // Không lọc theo doanh thu
             }
+            capNhatDuLieu();
         });
 
         comboLoaiThoiGian.addActionListener(e -> {
@@ -196,25 +201,22 @@ public class ManHinhThongKeMonAn extends JPanel {
         comboGiaTriThoiGian.removeAllItems();
         LocalDate today = LocalDate.now();
 
-        if ("Ngày".equals(loaiThoiGian)) {
-            for (int i = 29; i >= 0; i--) {
-                LocalDate d = today.minusDays(i);
-                comboGiaTriThoiGian.addItem(d.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-            }
-        } else if ("Tháng".equals(loaiThoiGian)) {
-            for (int i = 11; i >= 0; i--) {
+        if ("Tháng".equals(loaiThoiGian)) {
+            // Thêm 12 tháng gần nhất, tháng hiện tại ở đầu
+            for (int i = 0; i < 12; i++) {
                 YearMonth ym = YearMonth.from(today).minusMonths(i);
                 comboGiaTriThoiGian.addItem(ym.getMonthValue() + "/" + ym.getYear());
             }
-        } else {
+        } else { // Năm
             int year = today.getYear();
             for (int y = year; y >= year - 9; y--) {
                 comboGiaTriThoiGian.addItem(String.valueOf(y));
             }
         }
+        
+        // Chọn giá trị đầu tiên (tháng/năm hiện tại)
         comboGiaTriThoiGian.setSelectedIndex(0);
         giaTriThoiGian = comboGiaTriThoiGian.getSelectedItem().toString();
-        capNhatDuLieu();
     }
 
     private JPanel taoPanelBieuDoVaBang() {
@@ -292,15 +294,12 @@ public class ManHinhThongKeMonAn extends JPanel {
         Map<String, Double> dtMap = new HashMap<>();
 
         LocalDate start = null, end = null;
-        if ("Ngày".equals(loaiThoiGian)) {
-            LocalDate d = LocalDate.parse(giaTriThoiGian, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            start = d; end = d.plusDays(1);
-        } else if ("Tháng".equals(loaiThoiGian)) {
+        if ("Tháng".equals(loaiThoiGian)) {
             String[] p = giaTriThoiGian.split("/");
             int m = Integer.parseInt(p[0]), y = Integer.parseInt(p[1]);
             start = LocalDate.of(y, m, 1);
             end = YearMonth.of(y, m).atEndOfMonth().plusDays(1);
-        } else {
+        } else { // Năm
             int y = Integer.parseInt(giaTriThoiGian);
             start = LocalDate.of(y, 1, 1);
             end = LocalDate.of(y + 1, 1, 1);
@@ -359,7 +358,7 @@ public class ManHinhThongKeMonAn extends JPanel {
         top5MonAn.clear();
 
         if (duLieuThongKe.isEmpty()) {
-           
+            // Không có dữ liệu
         } else {
             List<Map<String, Object>> sorted = new ArrayList<>(duLieuThongKe);
             sapXep(sorted);
@@ -418,10 +417,34 @@ public class ManHinhThongKeMonAn extends JPanel {
 
     private void sapXep(List<Map<String, Object>> list) {
         list.sort((a, b) -> {
-            int cmp = sortTheoSoLuong
-                    ? Integer.compare((Integer) a.get("soLuong"), (Integer) b.get("soLuong"))
-                    : Double.compare((Double) a.get("doanhThu"), (Double) b.get("doanhThu"));
-            return giamDan ? -cmp : cmp;
+            int cmp = 0;
+            
+            // Nếu lọc theo cả 2 tiêu chí
+            if (locTheoSoLuong && locTheoDoanhThu) {
+                // Ưu tiên số lượng trước
+                cmp = Integer.compare((Integer) a.get("soLuong"), (Integer) b.get("soLuong"));
+                if (cmp == 0) {
+                    // Nếu số lượng bằng nhau, xét doanh thu
+                    cmp = Double.compare((Double) a.get("doanhThu"), (Double) b.get("doanhThu"));
+                    return doanhThuGiamDan ? -cmp : cmp;
+                }
+                return soLuongGiamDan ? -cmp : cmp;
+            }
+            // Nếu chỉ lọc theo số lượng
+            else if (locTheoSoLuong) {
+                cmp = Integer.compare((Integer) a.get("soLuong"), (Integer) b.get("soLuong"));
+                return soLuongGiamDan ? -cmp : cmp;
+            }
+            // Nếu chỉ lọc theo doanh thu
+            else if (locTheoDoanhThu) {
+                cmp = Double.compare((Double) a.get("doanhThu"), (Double) b.get("doanhThu"));
+                return doanhThuGiamDan ? -cmp : cmp;
+            }
+            // Không lọc gì cả, sắp xếp theo số lượng giảm dần mặc định
+            else {
+                cmp = Integer.compare((Integer) a.get("soLuong"), (Integer) b.get("soLuong"));
+                return -cmp;
+            }
         });
     }
 
@@ -430,7 +453,7 @@ public class ManHinhThongKeMonAn extends JPanel {
         container.removeAll();
 
         if (top5MonAn.isEmpty()) {
-            
+            // Không có dữ liệu
         } else {
             int rank = 1;
             for (Map<String, Object> m : top5MonAn) {
@@ -512,6 +535,7 @@ public class ManHinhThongKeMonAn extends JPanel {
         }
     }
 
+   
     private void xuatBaoCao() {
         if (duLieuThongKe.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất báo cáo!", "Thông báo", JOptionPane.WARNING_MESSAGE);

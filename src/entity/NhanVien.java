@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NhanVien implements Loggable{
+public class NhanVien {
     private String maNV;
     private String hoTen;
     private LocalDate ngaySinh;
@@ -24,6 +24,19 @@ public class NhanVien implements Loggable{
 //    }
     public NhanVien(String maNV){
         this.maNV = maNV;
+    }
+    
+    
+    
+	public NhanVien(String maNV, String hoTen) {
+		this.maNV = maNV;
+		this.hoTen = hoTen;
+	}
+
+
+
+	public NhanVien() {
+    	
     }
     
     public NhanVien(String maNV, String hoTen, LocalDate ngaySinh, String email, String soDienThoai, boolean gioiTinh,
@@ -120,31 +133,16 @@ public class NhanVien implements Loggable{
 	public void setAnhDaiDien(String anhDaiDien) {
 		this.anhDaiDien = anhDaiDien;
 	}
-
-	@Override
-	public String getMaDoiTuong() {
-		return this.maNV;
-	}
-
-	@Override
-	public String getTenBang() {
-		return "NhanVien";
-	}
-
-	@Override
-	public String toLogString() {
-		return toString();
-	}
     
 	
 	
     
     
-    @Override
-    public String toString() {
-        return "NhanVien [maNV=" + maNV + ", hoTen=" + hoTen + ", ngaySinh=" + ngaySinh + ", email=" + email
-                + ", soDienThoai=" + soDienThoai + ", gioiTinh=" + gioiTinh + ", chucVu=" + chucVu + ", ngayVaoLam="
-                + ngayVaoLam + ", trangThai=" + trangThai + "]";
-    }   
+//    @Override
+//    public String toString() {
+//        return "NhanVien [maNV=" + maNV + ", hoTen=" + hoTen + ", ngaySinh=" + ngaySinh + ", email=" + email
+//                + ", soDienThoai=" + soDienThoai + ", gioiTinh=" + gioiTinh + ", chucVu=" + chucVu + ", ngayVaoLam="
+//                + ngayVaoLam + ", trangThai=" + trangThai + "]";
+//    }   
 }
 

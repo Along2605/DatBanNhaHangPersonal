@@ -6,7 +6,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,8 +18,12 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.text.JTextComponent;
 
+import com.toedter.calendar.JDateChooser;
+
 import dao.BanAnDAO;
+import dao.PhieuDatBanDAO;
 import entity.BanAn;
+import entity.PhieuDatBan;
 
 public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener{
 
@@ -30,6 +36,17 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
     private JComboBox<String> cboTrangThai;
     private JComboBox<String> cboLoaiBan;
     private JTextField txtSoLuongCho;
+    
+    private JDateChooser dateFilter;
+    private JComboBox<String> cboTimeFilter;
+    private JButton btnLocNhanh;
+    
+    // Hằng số khung giờ
+    private static final int KHUNG_SANG = 1;
+    private static final int KHUNG_TRUA = 2;
+    private static final int KHUNG_CHIEU = 3;
+    private static final int KHUNG_TOI = 4;
+
     
     private JTable tableBanAn;
     private DefaultTableModel tableModel;
@@ -53,6 +70,8 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
 	    setLayout(new BorderLayout(10, 10));
 	    setBackground(BACKGROUND_COLOR);
 	    setBorder(new EmptyBorder(20, 20, 20, 20));
+	    // reset, tự động dọn bàn
+//	    dao.resetTrangThaiBanHangNgay();
 
 	    // Add components
 	    add(createHeaderPanel(), BorderLayout.NORTH);
@@ -119,8 +138,8 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         cboKhuVuc = createComboBox(new String[]{"-- Tất cả --", "Khu gia đình", "Khu VIP", "Khu couple", "Khu BBQ ngoài trời", "Phòng riêng Hanok"});
         addFormField(formPanel, gbc, 2, "Khu vực:", cboKhuVuc);
         
-        // Trạng thái
-        cboTrangThai = createComboBox(new String[]{"-- Tất cả --", "Trống", "Đang sử dụng", "Đã đặt", "Đang dọn"});
+        // Trạng thái (4 trạng thái chuẩn)
+        cboTrangThai = createComboBox(new String[]{"-- Tất cả --", "Trống", "Đã đặt", "Đang sử dụng", "Bảo trì"});
         addFormField(formPanel, gbc, 3, "Trạng thái:", cboTrangThai);
         
         // Loại bàn
@@ -128,8 +147,7 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         addFormField(formPanel, gbc, 4, "Loại bàn:", cboLoaiBan);
 
         // Số lượng chỗ
-        addFormField(formPanel, gbc, 5, "Số lượng chỗ:", txtSoLuongCho = createTextField());
-        
+        addFormField(formPanel, gbc, 5, "Số lượng chỗ:", txtSoLuongCho = createTextField());        
         mainPanel.add(formPanel, BorderLayout.CENTER);
         
         // Button panel
@@ -161,16 +179,55 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         JPanel panel = new JPanel(new BorderLayout(0, 10));
         panel.setBackground(BACKGROUND_COLOR);
         
-        // Info panel
-        JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        infoPanel.setBackground(Color.WHITE);
-        infoPanel.setBorder(new EmptyBorder(10, 15, 10, 15));
+        JPanel topBarPanel = new JPanel(new BorderLayout(10, 0));
+        topBarPanel.setBackground(Color.WHITE);
+        topBarPanel.setBorder(new EmptyBorder(10, 15, 10, 15));
+        
+        
         
         lblThongTin= new JLabel("Tổng số bàn: 0");
         lblThongTin.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        infoPanel.add(lblThongTin);
+        topBarPanel.add(lblThongTin, BorderLayout.WEST);
+        // lọc ngày và giờ
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        filterPanel.setBackground(Color.WHITE);
         
-        panel.add(infoPanel, BorderLayout.NORTH);
+        JLabel lblNgay = new JLabel("Ngày xem:");
+        lblNgay.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        
+        dateFilter = new JDateChooser();
+        dateFilter.setDateFormatString("dd/MM/yyyy");
+        dateFilter.setDate(new Date()); // Mặc định hôm nay
+        dateFilter.setPreferredSize(new Dimension(130, 30));
+        
+        cboTimeFilter = new JComboBox<>(new String[]{"Sáng (6-11h)", "Trưa (11-14h)", "Chiều (14-17h)", "Tối (17-22h)"});
+        cboTimeFilter.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        cboTimeFilter.setPreferredSize(new Dimension(120, 30));
+        
+     // Tự động chọn khung giờ hiện tại
+        int currentHour = java.time.LocalTime.now().getHour();
+        cboTimeFilter.setSelectedIndex(xacDinhKhungGioIndex(currentHour));
+
+        btnLocNhanh = new JButton("Xem");
+        btnLocNhanh.setBackground(MAIN_COLOR);
+        btnLocNhanh.setForeground(Color.WHITE);
+        btnLocNhanh.setFocusPainted(false);
+        btnLocNhanh.setPreferredSize(new Dimension(60, 30));
+        btnLocNhanh.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+     // Sự kiện lọc
+        btnLocNhanh.addActionListener(e -> loadDanhSachBanAn());
+        
+        filterPanel.add(lblNgay);
+        filterPanel.add(dateFilter);
+        filterPanel.add(cboTimeFilter);
+        filterPanel.add(btnLocNhanh);
+        
+        topBarPanel.add(filterPanel, BorderLayout.EAST);
+        
+        panel.add(topBarPanel, BorderLayout.NORTH);
+        
+        
         
         // Table
         String[] columns = {
@@ -323,7 +380,12 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
     	try {
 			tableModel.setRowCount(0);
 			
-			List<BanAn> dsBan= dao.getAllBanAn();
+			Date date = dateFilter.getDate();
+	        if (date == null) date = new Date();
+	        LocalDate localDate = new java.sql.Date(date.getTime()).toLocalDate();
+	        
+	        int khungGio = cboTimeFilter.getSelectedIndex() + 1;
+	        List<BanAn> dsBan = dao.getDanhSachBanTheoNgayGio(localDate, khungGio);
 			for (BanAn ban : dsBan) {
 	            tableModel.addRow(new Object[] {
 	                ban.getMaBan(),
@@ -342,6 +404,8 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
     	
     	capNhatThongTin();       
     }
+    
+    
     
     
 //    private void taoHoaDon() {
@@ -383,6 +447,7 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
             String trangThai = cboTrangThai.getSelectedItem().toString();
             String loaiBan = cboLoaiBan.getSelectedItem().toString();
             String soLuongCho = txtSoLuongCho.getText().trim();
+            
 
             List<BanAn> dsBan = dao.getAllBanAn();
             if (dsBan == null) {
@@ -449,6 +514,9 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         }
     }
     
+    
+    
+     
     /**
      * Làm mới form tìm kiếm
      */
@@ -459,13 +527,11 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         cboKhuVuc.setSelectedIndex(0);
         cboTrangThai.setSelectedIndex(0);
         cboLoaiBan.setSelectedIndex(0);
+//        dateChooserNgay.setDate(new Date());
+//        cboKhungGio.setSelectedIndex(0);
         loadDanhSachBanAn();
     }
     
-    /**
-     * Xem chi tiết bàn ăn được chọn
-     * TODO: Hiển thị dialog chi tiết hoặc chuyển sang panel chi tiết
-     */
     /**
      * Xem chi tiết bàn ăn được chọn
      */
@@ -479,11 +545,18 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
             return;
         }
         
-        // Lấy mã bàn từ dòng được chọn
+        // ✅ LẤY THÔNG TIN TỪ BẢNG HIỂN THỊ (đã xử lý trạng thái đúng)
         String maBan = tableModel.getValueAt(selectedRow, 0).toString();
+        String tenBan = tableModel.getValueAt(selectedRow, 1).toString();
+        int soLuongCho = Integer.parseInt(tableModel.getValueAt(selectedRow, 2).toString());
+        String tenLoaiBan = tableModel.getValueAt(selectedRow, 3).toString();
+        String trangThaiHienThi = tableModel.getValueAt(selectedRow, 4).toString(); // ← TRẠNG THÁI ĐÃ XỬ LÝ
+        String tenKhuVuc = tableModel.getValueAt(selectedRow, 5).toString();
+        String ghiChu = tableModel.getValueAt(selectedRow, 6).toString();
         
         // Lấy thông tin chi tiết từ database
         BanAn banAn = dao.getBanTheoMa(maBan);
+        
         if (banAn == null) {
             JOptionPane.showMessageDialog(this,
                 "Không tìm thấy thông tin bàn!",
@@ -491,7 +564,31 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
             return;
         }
         
-        new DialogChiTietBanAn((Frame) SwingUtilities.getWindowAncestor(this), banAn).setVisible(true);
+        // ✅ GHI ĐÈ TRẠNG THÁI BẰNG TRẠNG THÁI ĐÃ XỬ LÝ
+        banAn.setTrangThai(trangThaiHienThi);
+        
+        // Truyền ngày & khung giờ đang xem
+        try {
+            Date date = dateFilter.getDate();
+            if (date == null) date = new Date();
+            LocalDate ngayXem = new java.sql.Date(date.getTime()).toLocalDate();
+            
+            int khungGio = cboTimeFilter.getSelectedIndex() + 1; // 1-4
+            
+            // Gọi constructor với đầy đủ tham số
+            new DialogChiTietBanAn(
+                (Frame) SwingUtilities.getWindowAncestor(this), 
+                banAn,
+                ngayXem,
+                khungGio
+            ).setVisible(true);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Lỗi khi mở chi tiết bàn: " + e.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
    
@@ -577,7 +674,16 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
 	}
     
     
-    
+	
+	// Helper: Map giờ hiện tại sang index của ComboBox
+	private int xacDinhKhungGioIndex(int gio) {
+	    if (gio >= 6 && gio < 11) return 0; // Sáng
+	    if (gio >= 11 && gio < 14) return 1; // Trưa
+	    if (gio >= 14 && gio < 17) return 2; // Chiều
+	    return 3; // Tối
+	}
+
+	
     
 //    public static void main(String[] args) {
 //        SwingUtilities.invokeLater(() -> {

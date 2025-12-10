@@ -21,6 +21,8 @@ import util.Session;
 import java.awt.*;
 
 import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -49,22 +51,142 @@ public class DialogChiTietPhieuDat extends JDialog{
     
     // Formatters
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-   
+    
+    private List<String> danhSachBanTrongPhieu; 
     
     public DialogChiTietPhieuDat(Frame parent, BanAn banAn) {
-        super(parent, "Chi tiết phiếu đặt bàn", true);
-        this.banAn = banAn;
-        this.phieuDatBanDAO= new PhieuDatBanDAO();
-        
-        setSize(960, 700);
-        setLocationRelativeTo(parent);
-        setLayout(new BorderLayout(10, 10));
-        
-        initComponents();
-        loadThongTinPhieuDat();
-    }
-    
-    private void initComponents() {
+//        super(parent, "Chi tiết phiếu đặt bàn", true);
+//        this.banAn = banAn;
+//        this.phieuDatBanDAO= new PhieuDatBanDAO();
+//        
+//        setSize(960, 700);
+//        setLocationRelativeTo(parent);
+//        setLayout(new BorderLayout(10, 10));
+//        
+//        initComponents();
+//        loadThongTinPhieuDat();
+    	this(parent, banAn, null, null);
+	}
+
+	public DialogChiTietPhieuDat(Frame parent, BanAn banAn, PhieuDatBan phieuDat, List<String> danhSachBan) {
+		super(parent, "Chi tiết phiếu đặt bàn", true);
+		this.banAn = banAn;
+		this.phieuDatBan = phieuDat;
+		this.danhSachBanTrongPhieu = danhSachBan;
+		this.phieuDatBanDAO = new PhieuDatBanDAO();
+
+		setSize(960, 700);
+		setLocationRelativeTo(parent);
+		setLayout(new BorderLayout(10, 10));
+
+		initComponents();
+
+// ✅ Nếu đã có phiếu đặt truyền vào, load luôn
+		if (phieuDat != null) {
+			loadThongTinPhieuDatDaCo();
+		} else {
+			loadThongTinPhieuDat();
+		}
+	}
+
+	/**
+	 * Load thông tin phiếu đặt khi đã có sẵn object PhieuDatBan
+	 */
+	private void loadThongTinPhieuDatDaCo() {
+		tableModel.setRowCount(0);
+
+		try {
+			if (phieuDatBan == null) {
+				JOptionPane.showMessageDialog(this, "Không có thông tin phiếu đặt!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+
+		// Hiển thị thông tin cơ bản
+		lblMaPhieuValue.setText(phieuDatBan.getMaPhieuDat());
+		
+		// Hiển thị ngày và khung giờ
+		int khungGio = phieuDatBan.getKhungGio();
+		String tenKhungGio = getTenKhungGioFromID(khungGio);
+		lblNgayDatValue.setText(phieuDatBan.getNgayDat().format(dtf) + " (" + tenKhungGio + ")");			lblSoNguoiValue.setText(String.valueOf(phieuDatBan.getSoNguoi()) + " người");
+
+			if (phieuDatBan.getKhachHang() != null) {
+				lblKhachHangValue.setText(phieuDatBan.getKhachHang().getHoTen());
+				lblSdtValue.setText(phieuDatBan.getKhachHang().getSdt());
+			} else {
+				lblKhachHangValue.setText("Khách vãng lai");
+				lblSdtValue.setText("Không có");
+			}
+
+			txtGhiChu.setText(phieuDatBan.getGhiChu());
+
+			String trangThai = phieuDatBan.getTrangThai();
+			lblTrangThaiValue.setText(trangThai);
+			if ("Đã đặt".equals(trangThai)) {
+				lblTrangThaiValue.setBackground(WARNING_COLOR);
+				lblTrangThaiValue.setForeground(Color.WHITE);
+			} else if ("Đã xác nhận".equals(trangThai)) {
+				lblTrangThaiValue.setBackground(SUCCESS_COLOR);
+				lblTrangThaiValue.setForeground(Color.WHITE);
+			} else if ("Đã hủy".equals(trangThai)) {
+				lblTrangThaiValue.setBackground(new Color(158, 158, 158));
+				lblTrangThaiValue.setForeground(Color.WHITE);
+			}
+
+			NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
+
+			// Load danh sách món ăn
+			ChiTietPhieuDatDAO chiTietDAO = new ChiTietPhieuDatDAO();
+			List<ChiTietPhieuDat> dsMonAn = chiTietDAO.getMonAnTheoPhieu(phieuDatBan.getMaPhieuDat());
+
+			if (dsMonAn != null && !dsMonAn.isEmpty()) {
+				int stt = 1;
+				for (ChiTietPhieuDat chiTiet : dsMonAn) {
+					String tenMon = chiTiet.getMonAn().getTenMon();
+					String donGia = currencyFormat.format(chiTiet.getDonGia()) + "đ";
+					int soLuong = chiTiet.getSoLuong();
+					double thanhTien = chiTiet.getDonGia() * soLuong;
+					String thanhTienStr = currencyFormat.format(thanhTien) + "đ";
+					String ghiChu = chiTiet.getGhiChu() != null ? chiTiet.getGhiChu() : "";
+
+					tableModel.addRow(new Object[] { stt++, tenMon, donGia, soLuong, thanhTienStr, ghiChu });
+				}
+			} else {
+				JOptionPane.showMessageDialog(this, "Phiếu đặt này chưa có món ăn đặt trước!", "Thông báo",
+						JOptionPane.INFORMATION_MESSAGE);
+			}
+
+			// Cập nhật tổng tiền
+			tinhTongTien(phieuDatBan);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Lỗi khi load thông tin phiếu đặt!\n" + e.getMessage(), "Lỗi",
+					JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	private String getTenKhungGio(int gio) {
+		if (gio >= 6 && gio < 11) return "Sáng";
+	    if (gio >= 11 && gio < 14) return "Trưa";
+	    if (gio >= 14 && gio < 17) return "Chiều";
+	    return "Tối";
+	}
+	
+	/**
+	 * Lấy tên khung giờ từ ID
+	 * @param khungGioID 1=Sáng, 2=Trưa, 3=Chiều, 4=Tối
+	 */
+	private String getTenKhungGioFromID(int khungGioID) {
+		switch (khungGioID) {
+			case 1: return "Sáng (6h-11h)";
+			case 2: return "Trưa (11h-14h)";
+			case 3: return "Chiều (14h-17h)";
+			case 4: return "Tối (17h-22h)";
+			default: return "Không xác định";
+		}
+	}
+
+	private void initComponents() {
         // Panel chính
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -102,7 +224,8 @@ public class DialogChiTietPhieuDat extends JDialog{
      * Tạo panel thông tin phiếu đặt
      */
     private JPanel createThongTinPanel() {
-        JPanel panel = new JPanel(new GridLayout(2, 1, 10, 10));
+    	// gridlayout(0,1) tự động thêm hàng
+        JPanel panel = new JPanel(new GridLayout(0,1,10,10));
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createTitledBorder(
@@ -110,36 +233,33 @@ public class DialogChiTietPhieuDat extends JDialog{
                 "Thông tin phiếu đặt",
                 TitledBorder.LEFT,
                 TitledBorder.TOP,
-                new Font("Segoe UI", Font.BOLD, 14),
+                new Font("Segoe UI", Font.BOLD, 13),
                 MAIN_COLOR
             ),
-            new EmptyBorder(10, 10, 10, 10)
+            new EmptyBorder(10,10,10,10)
         ));
         
-        // Dòng 1: Thông tin cơ bản
-     
-        JPanel row1 = new JPanel(new GridLayout(1, 4, 15, 0));
+        JPanel row1= new JPanel(new GridLayout(1,4,15,0));
         row1.setBackground(Color.WHITE);
-        
+
         lblMaPhieuValue = new JLabel();
         lblNgayDatValue = new JLabel();
         lblSoNguoiValue = new JLabel();
         lblTrangThaiValue = new JLabel();
-        
         
         row1.add(createInfoField("Mã phiếu đặt:", lblMaPhieuValue, false));
         row1.add(createInfoField("Ngày đặt:", lblNgayDatValue, false));
         row1.add(createInfoField("Số người:", lblSoNguoiValue, false));
         row1.add(createInfoField("Trạng thái:", lblTrangThaiValue, true));
         
-        // Dòng 2: Thông tin khách hàng & bàn
-        JPanel row2 = new JPanel(new GridLayout(1, 4, 15, 0));
+        // row2 thong tin khach hang va ban
+        JPanel row2= new JPanel(new GridLayout(1,4,15,0));
         row2.setBackground(Color.WHITE);
         
         lblKhachHangValue = new JLabel("...");
         lblSdtValue = new JLabel("...");
-        lblBanValue = new JLabel(banAn.getTenBan());
-        lblKhuVucValue = new JLabel(banAn.getKhuVuc() != null ? banAn.getKhuVuc().getTenKhuVuc() : "");
+        lblBanValue = new JLabel(banAn != null ? banAn.getTenBan() : "");
+        lblKhuVucValue = new JLabel(banAn != null && banAn.getKhuVuc() != null ? banAn.getKhuVuc().getTenKhuVuc() : "");
         
         row2.add(createInfoField("Khách hàng:", lblKhachHangValue, false));
         row2.add(createInfoField("SĐT:", lblSdtValue, false));
@@ -149,6 +269,91 @@ public class DialogChiTietPhieuDat extends JDialog{
         panel.add(row1);
         panel.add(row2);
         
+
+//        lblKhachHangValue = new JLabel("...");
+//        lblSdtValue = new JLabel("...");
+//        lblBanValue = new JLabel(banAn != null ? banAn.getTenBan() : "");
+//        lblKhuVucValue = new JLabel(banAn != null && banAn.getKhuVuc() != null ? banAn.getKhuVuc().getTenKhuVuc() : "");
+//
+//        GridBagConstraints gbc = new GridBagConstraints();
+//        gbc.insets = new Insets(2, 8, 2, 8);
+//        gbc.fill = GridBagConstraints.HORIZONTAL;
+//        gbc.gridy = 0;
+//        gbc.weightx = 0.25;
+//
+//        gbc.gridx = 0;
+//        panel.add(createInfoField("Mã phiếu đặt:", lblMaPhieuValue, false), gbc);
+//
+//        gbc.gridx = 1;
+//        panel.add(createInfoField("Ngày đặt:", lblNgayDatValue, false), gbc);
+//
+//        gbc.gridx = 2;
+//        panel.add(createInfoField("Số người:", lblSoNguoiValue, false), gbc);
+//
+//        gbc.gridx = 3;
+//        panel.add(createInfoField("Trạng thái:", lblTrangThaiValue, true), gbc);
+//
+//        gbc.gridy = 1;
+//        gbc.gridx = 0;
+//        panel.add(createInfoField("Khách hàng:", lblKhachHangValue, false), gbc);
+//
+//        gbc.gridx = 1;
+//        panel.add(createInfoField("SĐT:", lblSdtValue, false), gbc);
+//
+//        gbc.gridx = 2;
+//        panel.add(createInfoField("Bàn:", lblBanValue, false), gbc);
+//
+//        gbc.gridx = 3;
+//        panel.add(createInfoField("Khu vực:", lblKhuVucValue, false), gbc);
+        
+        // them dong 3: ds bàn (nếu đặt nhiều bàn)
+        JPanel row3= null;
+        
+      
+
+        if (danhSachBanTrongPhieu != null && danhSachBanTrongPhieu.size() > 1) {
+            row3 = new JPanel(new BorderLayout(5, 5));
+            row3.setBackground(new Color(255, 248, 225));
+            
+            row3.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(WARNING_COLOR, 2),
+                new EmptyBorder(8, 10, 8, 10)
+            ));
+
+            JLabel lblDSBanTitle = new JLabel("Phiếu này đặt " + danhSachBanTrongPhieu.size() + " bàn:");
+            lblDSBanTitle.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            lblDSBanTitle.setForeground(new Color(191, 87, 0));
+
+            JTextArea txtDanhSachBan = new JTextArea(2, 0);
+            txtDanhSachBan.setEditable(false);
+//            txtDanhSachBan.setOpaque(false);
+            txtDanhSachBan.setBackground(new Color(255,248,225));
+            txtDanhSachBan.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            txtDanhSachBan.setLineWrap(true);  // tu dong xuong dong
+            txtDanhSachBan.setWrapStyleWord(true); // ngắt dòng theo từ hoàn chỉnh (không cắt giữa từ)
+
+            StringBuilder sb = new StringBuilder();
+            BanAnDAO banDAO = new BanAnDAO();
+            for (int i = 0; i < danhSachBanTrongPhieu.size(); i++) {
+                String maBan = danhSachBanTrongPhieu.get(i);
+                BanAn ban = banDAO.getBanTheoMa(maBan);
+                if (ban != null) {
+                    sb.append(ban.getTenBan()).append(" (").append(ban.getSoLuongCho()).append(" chỗ)");
+                    if (i < danhSachBanTrongPhieu.size() - 1) {
+                        sb.append(", ");
+                    }
+                }
+            }
+            txtDanhSachBan.setText(sb.toString());
+
+            row3.add(lblDSBanTitle, BorderLayout.NORTH);
+            row3.add(txtDanhSachBan, BorderLayout.CENTER);  
+            
+            if(row3 != null) {
+            	panel.add(row3);
+            }
+           
+        }
         return panel;
     }
     
@@ -331,35 +536,127 @@ public class DialogChiTietPhieuDat extends JDialog{
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
         panel.setBackground(Color.WHITE);
         
-        JButton btnXacNhan = createButton("Xác nhận phiếu", SUCCESS_COLOR);
-        btnXacNhan.setPreferredSize(new Dimension(160, 40));
-        btnXacNhan.addActionListener(e -> xacNhanPhieu());
+        // Lấy trạng thái phiếu đặt
+        String trangThai = phieuDatBan != null ? phieuDatBan.getTrangThai() : "Chờ xác nhận";
         
-        JButton btnChuyenBan = createButton("Chuyển bàn", new Color(52, 152, 219));
-        btnChuyenBan.setPreferredSize(new Dimension(160, 40));
-        btnChuyenBan.addActionListener(e-> chuyenBan());
-              
-        JButton btnHuyPhieu = createButton("Hủy phiếu", new Color(244, 67, 54));
-        btnHuyPhieu.setPreferredSize(new Dimension(160, 40));
-        btnHuyPhieu.addActionListener(e -> huyPhieu());
+        // Nút Xác nhận (chỉ hiển thị khi trạng thái là "Chờ xác nhận")
+        if ("Chờ xác nhận".equals(trangThai)) {
+            JButton btnXacNhan = createButton("Xác nhận phiếu", SUCCESS_COLOR);
+            btnXacNhan.setPreferredSize(new Dimension(160, 40));
+            btnXacNhan.addActionListener(e -> xacNhanPhieu());
+            panel.add(btnXacNhan);
+            
+            JButton btnKhachKhongDen = createButton("Khách không đến", new Color(244, 67, 54));
+            btnKhachKhongDen.setPreferredSize(new Dimension(160, 40));
+            btnKhachKhongDen.addActionListener(e -> xuLyKhachKhongDen());
+            panel.add(btnKhachKhongDen);
+        }
         
+        // Nút Chuyển bàn (chỉ hiển thị khi còn hoạt động)
+        if ("Chờ xác nhận".equals(trangThai) || "Đã xác nhận".equals(trangThai)) {
+            JButton btnChuyenBan = createButton("Chuyển bàn", new Color(52, 152, 219));
+            btnChuyenBan.setPreferredSize(new Dimension(160, 40));
+            btnChuyenBan.addActionListener(e-> chuyenBan());
+            panel.add(btnChuyenBan);
+        }
+        
+        // Nút Hủy phiếu (chỉ hiển thị khi trạng thái là "Chờ xác nhận")
+        if ("Chờ xác nhận".equals(trangThai)) {
+            JButton btnHuyPhieu = createButton("Hủy phiếu", new Color(158, 158, 158));
+            btnHuyPhieu.setPreferredSize(new Dimension(160, 40));
+            btnHuyPhieu.addActionListener(e -> huyPhieu());
+            panel.add(btnHuyPhieu);
+        }
+        
+        // Nút In phiếu
         JButton btnInPhieu = createButton("In phiếu", new Color(103, 58, 183));
         btnInPhieu.setPreferredSize(new Dimension(160, 40));
         btnInPhieu.addActionListener(e -> inPhieu());
+        panel.add(btnInPhieu);
         
+        // Nút Đóng
         JButton btnDong = createButton("Đóng", new Color(100, 100, 100));
         btnDong.setPreferredSize(new Dimension(160, 40));
         btnDong.addActionListener(e -> dispose());
-        
-        panel.add(btnXacNhan);
-        panel.add(btnChuyenBan);
-        panel.add(btnHuyPhieu);
-        panel.add(btnInPhieu);
         panel.add(btnDong);
         
         return panel;
     }
     
+    /**
+     * Xử lý khi khách không đến.
+     * Phiếu chuyển sang trạng thái "Khách không đến", tiền cọc sẽ được giữ lại.
+     */
+    private void xuLyKhachKhongDen() {
+        if (phieuDatBan == null) {
+            JOptionPane.showMessageDialog(this,
+                "Không có thông tin phiếu đặt!",
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        double tienCoc = phieuDatBan.getSoTienCoc();
+        NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
+        
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Xác nhận khách không đến?\n\n" +
+            "Thông tin phiếu:\n" +
+            "- Mã phiếu: " + phieuDatBan.getMaPhieuDat() + "\n" +
+            "- Khách hàng: " + (phieuDatBan.getKhachHang() != null ? phieuDatBan.getKhachHang().getHoTen() : "Khách vãng lai") + "\n" +
+            "- Tiền cọc: " + currencyFormat.format(tienCoc) + "đ\n\n" +
+            "⚠️ Tiền cọc sẽ không được hoàn lại!\n" +
+            "Phiếu sẽ chuyển sang trạng thái 'Khách không đến'.",
+            "Xác nhận", 
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        String maPhieuDat = phieuDatBan.getMaPhieuDat();
+        PhieuDatBanDAO phieuDAO = new PhieuDatBanDAO();
+        BanAnDAO banDAO = new BanAnDAO();
+
+        try {
+            // 1. Cập nhật trạng thái phiếu sang "Khách không đến"
+            if (!phieuDAO.capNhatTrangThaiPhieu(maPhieuDat, "Khách không đến")) {
+                throw new Exception("Không thể cập nhật trạng thái phiếu!");
+            }
+
+            // 2. Cập nhật trạng thái tất cả bàn về "Trống"
+            if (danhSachBanTrongPhieu != null && !danhSachBanTrongPhieu.isEmpty()) {
+                for (String maBan : danhSachBanTrongPhieu) {
+                    if (!banDAO.capNhatTrangThaiBan(maBan, "Trống")) {
+                        System.err.println("⚠️ Không thể cập nhật bàn: " + maBan);
+                    }
+                }
+            } else if (phieuDatBan.getBanAn() != null) {
+                // Fallback: chỉ cập nhật bàn hiện tại
+                String maBan = phieuDatBan.getBanAn().getMaBan();
+                if (!banDAO.capNhatTrangThaiBan(maBan, "Trống")) {
+                    throw new Exception("Không thể cập nhật trạng thái bàn!");
+                }
+            }
+
+            // 3. Thông báo thành công
+            JOptionPane.showMessageDialog(this,
+                "✅ Đã xử lý phiếu đặt!\n\n" +
+                "Trạng thái: Khách không đến\n" +
+                "Tiền cọc giữ lại: " + currencyFormat.format(tienCoc) + "đ\n" +
+                "Bàn đã được giải phóng.",
+                "Thành công", 
+                JOptionPane.INFORMATION_MESSAGE);
+
+            dispose();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "❌ Lỗi khi xử lý: " + e.getMessage(),
+                "Lỗi", 
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private Object chuyenBan() {
 		// TODO Auto-generated method stub
 		return null;
@@ -424,23 +721,21 @@ public class DialogChiTietPhieuDat extends JDialog{
      */
     private void loadThongTinPhieuDat() {
         // Xóa dữ liệu cũ
-        tableModel.setRowCount(0);
-        
+        tableModel.setRowCount(0);      
         try {
 			
 			phieuDatBan = phieuDatBanDAO.getPhieuDatTheoBan(banAn.getMaBan());
 			if (phieuDatBan == null) {
-	            JOptionPane.showMessageDialog(this, "Bàn này không có phiếu đặt hoặc phiếu đã được xử lý.", "Thông báo", JOptionPane.WARNING_MESSAGE);
-	            
+	            JOptionPane.showMessageDialog(this, "Bàn này không có phiếu đặt hoặc phiếu đã được xử lý.", "Thông báo", JOptionPane.WARNING_MESSAGE);	            
 	            lblMaPhieuValue.setText("Không có thông tin");
 	           
 	            return;
 	        }
 			
-			if(phieuDatBan==null) {
-				JOptionPane.showMessageDialog(this, "Không tìm thấy phiếu đặt cho bàn này", "Thông báo", JOptionPane.WARNING_MESSAGE);
-				return;
-			}
+//			if(phieuDatBan==null) {
+//				JOptionPane.showMessageDialog(this, "Không tìm thấy phiếu đặt cho bàn này", "Thông báo", JOptionPane.WARNING_MESSAGE);
+//				return;
+//			}
 			
 			lblMaPhieuValue.setText(phieuDatBan.getMaPhieuDat());
 	        lblNgayDatValue.setText(phieuDatBan.getNgayDat().format(dtf));
@@ -459,7 +754,7 @@ public class DialogChiTietPhieuDat extends JDialog{
 	        
 	        String trangThai = phieuDatBan.getTrangThai();
 	        lblTrangThaiValue.setText(trangThai);
-	        if ("Đã đặt".equals(trangThai)) {
+	        if ("Chờ xác nhận".equals(trangThai)) {
 	            lblTrangThaiValue.setBackground(WARNING_COLOR);
 	            lblTrangThaiValue.setForeground(Color.WHITE);
 	        }
@@ -508,9 +803,7 @@ public class DialogChiTietPhieuDat extends JDialog{
 	        JOptionPane.showMessageDialog(this,
 	            "Lỗi khi load thông tin phiếu đặt!\n" + e.getMessage(),
 	            "Lỗi", JOptionPane.ERROR_MESSAGE);
-		}
-        
-      
+		}   
         
     }
     
@@ -553,37 +846,87 @@ public class DialogChiTietPhieuDat extends JDialog{
     
 //    Xác nhận phiếu đặt 
  
+    /**
+     * Xác nhận phiếu đặt: Chuyển phiếu sang "Đã xác nhận", tạo hóa đơn, cập nhật trạng thái bàn.
+     * Luồng xử lý:
+     * 1. Cập nhật phiếu đặt: "Đã đặt" → "Đã xác nhận"
+     * 2. Cập nhật trạng thái bàn: "Đã đặt" → "Đang sử dụng"
+     * 3. Tạo hóa đơn mới với thông tin từ phiếu đặt
+     * 4. Chuyển chi tiết món ăn từ phiếu đặt sang hóa đơn
+     * 5. Chuyển tiền cọc vào hóa đơn
+     */
     private void xacNhanPhieu() {
+        if (phieuDatBan == null) {
+            JOptionPane.showMessageDialog(this,
+                "Không có thông tin phiếu đặt!",
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Kiểm tra trạng thái phiếu
+        if (!"Chờ xác nhận".equals(phieuDatBan.getTrangThai())) {
+            JOptionPane.showMessageDialog(this,
+                "Chỉ có thể xác nhận phiếu ở trạng thái 'Chờ xác nhận'!\n" +
+                "Trạng thái hiện tại: " + phieuDatBan.getTrangThai(),
+                "Không thể xác nhận", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Xác nhận với người dùng
         int confirm = JOptionPane.showConfirmDialog(this,
-            "Xác nhận phiếu đặt này?\n\n" +
-            "Sau khi xác nhận, phiếu đặt sẽ được đảm bảo và không thể hủy!",
-            "Xác nhận", JOptionPane.YES_NO_OPTION);
+            "XÁC NHẬN PHIẾU ĐẶT?\n\n" +
+            "Mã phiếu: " + phieuDatBan.getMaPhieuDat() + "\n" +
+            "Khách hàng: " + (phieuDatBan.getKhachHang() != null ? phieuDatBan.getKhachHang().getHoTen() : "Khách vãng lai") + "\n" +
+            "Số bàn: " + (danhSachBanTrongPhieu != null ? danhSachBanTrongPhieu.size() : 1) + " bàn\n\n" +
+            "Sau khi xác nhận:\n" +
+            "- Phiếu đặt: 'Chờ xác nhận' → 'Đã xác nhận'\n" +
+            "- Bàn: 'Đã đặt' → 'Đang sử dụng'\n" +
+            "- Tạo hóa đơn mới (Chưa thanh toán)\n" +
+            "- Chuyển tiền cọc vào hóa đơn",
+            "Xác nhận phiếu đặt", 
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE);
 
         if (confirm != JOptionPane.YES_OPTION) return;
 
-        String maPhieuDat = phieuDatBan.getMaPhieuDat();
-        String maBan = phieuDatBan.getBanAn().getMaBan();
-        String maKH = phieuDatBan.getKhachHang().getMaKH();
-        String maNV = Session.getMaNhanVienDangNhap();
-
+        // Khởi tạo DAO
         PhieuDatBanDAO phieuDAO = new PhieuDatBanDAO();
         BanAnDAO banDAO = new BanAnDAO();
         HoaDonDAO hoaDonDAO = new HoaDonDAO();
         ChiTietPhieuDatDAO ctpdDAO = new ChiTietPhieuDatDAO();
         ChiTietHoaDonDAO cthdDAO = new ChiTietHoaDonDAO();
+        
+        String maPhieuDat = phieuDatBan.getMaPhieuDat();
+        String maNV = Session.getMaNhanVienDangNhap();
 
         try {
-            // --- 1. Cập nhật trạng thái phiếu & bàn ---
-            if (!phieuDAO.capNhatTrangThaiPhieu(maPhieuDat, "Đã xác nhận")
-                    || !banDAO.capNhatTrangThaiBan(maBan, "Đang sử dụng")) {
-                JOptionPane.showMessageDialog(this,
-                    "Không thể cập nhật trạng thái phiếu hoặc bàn!",
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
+           
+            // CẬP NHẬT PHIẾU ĐẶT
+            
+            if (!phieuDAO.capNhatTrangThaiPhieu(maPhieuDat, "Đã xác nhận")) {
+                throw new Exception("Không thể cập nhật trạng thái phiếu đặt!");
             }
-
-            // --- 2. Tạo hóa đơn mới ---
+         
+            //  CẬP NHẬT TRẠNG THÁI BÀN
+           
+            if (danhSachBanTrongPhieu != null && !danhSachBanTrongPhieu.isEmpty()) {
+                // Cập nhật tất cả bàn trong phiếu
+                for (String maBan : danhSachBanTrongPhieu) {
+                    if (!banDAO.capNhatTrangThaiBan(maBan, "Đang sử dụng")) {
+                        throw new Exception("Không thể cập nhật trạng thái bàn: " + maBan);
+                    }
+                }
+            } else if (phieuDatBan.getBanAn() != null) {
+                // Fallback: chỉ có một bàn
+                String maBan = phieuDatBan.getBanAn().getMaBan();
+                if (!banDAO.capNhatTrangThaiBan(maBan, "Đang sử dụng")) {
+                    throw new Exception("Không thể cập nhật trạng thái bàn: " + maBan);
+                }
+            }
+         
+            // BƯỚC 3: TẠO HÓA ĐƠN MỚI        
             String maHoaDon = hoaDonDAO.taoMaHoaDonTuDong();
+            double tienCoc = phieuDatBan.getSoTienCoc();
 
             HoaDon hoaDonMoi = new HoaDon();
             hoaDonMoi.setMaHoaDon(maHoaDon);
@@ -591,44 +934,30 @@ public class DialogChiTietPhieuDat extends JDialog{
             hoaDonMoi.setKhachHang(phieuDatBan.getKhachHang());
             hoaDonMoi.setNhanVien(new NhanVien(maNV));
             hoaDonMoi.setNgayLapHoaDon(java.time.LocalDateTime.now());
-            hoaDonMoi.setThueVAT(0.1);
+            hoaDonMoi.setThueVAT(0.1); // VAT 10%
             hoaDonMoi.setKhuyenMai(null);
             hoaDonMoi.setTrangThai("Chưa thanh toán");
             hoaDonMoi.setPhieuDat(phieuDatBan);
+            hoaDonMoi.setTienCoc(tienCoc); // Chuyển tiền cọc vào hóa đơn
 
-            // ✅ Lấy tiền cọc từ phiếu đặt và lưu vào hóa đơn
-            double tienCoc = phieuDatBan.getSoTienCoc();
-            hoaDonMoi.setTienCoc(tienCoc);
-
-            // ✅ Tính tổng tiền món đã đặt
+            // TÍNH TỔNG TIỀN TỪ MÓN ĐÃ ĐẶT            
             List<ChiTietPhieuDat> dsCTPD = ctpdDAO.getChiTietTheoMaPhieu(maPhieuDat);
-            double tongTienChua = 0;
+            double tongTienMonAn = 0;
             for (ChiTietPhieuDat ctpd : dsCTPD) {
-                tongTienChua += ctpd.getSoLuong() * ctpd.getDonGia();
+                tongTienMonAn += ctpd.getSoLuong() * ctpd.getDonGia();
             }
 
-            double tongTienSauVAT =0;
-            if (tongTienChua > 0) {
-                tongTienSauVAT = tongTienChua * (1 + hoaDonMoi.getThueVAT());
-            }
+            // Tính tổng tiền bao gồm VAT
+            double tongTienSauVAT = tongTienMonAn * (1 + hoaDonMoi.getThueVAT());
             hoaDonMoi.setTongTien(tongTienSauVAT);
-            
-//            if (dsCTPD.isEmpty()) {
-//                hoaDonMoi.setTongTien(0); // chưa có món nào, sẽ cập nhật sau
-//            } else {
-//                double tongTienChua = dsCTPD.stream()
-//                    .mapToDouble(c -> c.getSoLuong() * c.getDonGia())
-//                    .sum();
-//                hoaDonMoi.setTongTien(tongTienChua * (1 + hoaDonMoi.getThueVAT()));
-//            }
 
-
-            // --- 3. Lưu hóa đơn ---
+            // Lưu hóa đơn vào database
             if (!hoaDonDAO.themHoaDon(hoaDonMoi, Session.getMaNhanVienDangNhap())) {
                 throw new Exception("Không thể tạo hóa đơn mới!");
             }
 
-            // --- 4. Chuyển chi tiết phiếu đặt sang chi tiết hóa đơn ---
+           
+            //CHUYỂN CHI TIẾT MÓN ĂN           
             for (ChiTietPhieuDat ctpd : dsCTPD) {
                 ChiTietHoaDon cthd = new ChiTietHoaDon();
                 cthd.setHoaDon(new HoaDon(maHoaDon));
@@ -639,70 +968,158 @@ public class DialogChiTietPhieuDat extends JDialog{
                 cthd.setGhiChu(ctpd.getGhiChu());
 
                 if (!cthdDAO.themChiTietHoaDon(cthd, Session.getMaNhanVienDangNhap())) {
-                    throw new Exception("Không thể thêm chi tiết hóa đơn cho món: " 
-                        + ctpd.getMonAn().getTenMon());
+                    throw new Exception("Không thể thêm chi tiết hóa đơn cho món: " + ctpd.getMonAn().getTenMon());
                 }
             }
 
-            // --- 5. Thông báo thành công ---
+            
+            // THÔNG BÁO THÀNH CÔNG            
+            NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
             JOptionPane.showMessageDialog(this,
-                "✅ Xác nhận phiếu đặt thành công!\n"
-                + "Đã tạo hóa đơn mã: " + maHoaDon
-                + "\nTiền cọc: " + String.format("%,.0f VNĐ", tienCoc)
-                + "\nTổng tiền (đã VAT): " + String.format("%,.0f VNĐ", tongTienSauVAT)
-                + "\nBàn đã chuyển sang 'Đang sử dụng'.",
-                "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                "✅ XÁC NHẬN PHIẾU ĐẶT THÀNH CÔNG!\n\n" +
+                "📋 Mã hóa đơn: " + maHoaDon + "\n" +
+                "💰 Tiền cọc: " + currencyFormat.format(tienCoc) + "đ\n" +
+                "🍽️ Tổng tiền món ăn: " + currencyFormat.format(tongTienMonAn) + "đ\n" +
+                "📊 Tổng tiền (đã VAT): " + currencyFormat.format(tongTienSauVAT) + "đ\n\n" +
+                "📍 Trạng thái phiếu: Đã xác nhận\n" +
+                "🪑 Trạng thái bàn: Đang sử dụng",
+                "Thành công", 
+                JOptionPane.INFORMATION_MESSAGE);
 
             dispose();
 
         } catch (Exception e) {
             e.printStackTrace();
+            
+           
+            // ROLLBACK KHI CÓ LỖI
+            
+            System.err.println("❌ LỖI KHI XÁC NHẬN PHIẾU - Đang rollback...");
+            
+            // Khôi phục trạng thái phiếu về "Chờ xác nhận"
+            phieuDAO.capNhatTrangThaiPhieu(maPhieuDat, "Chờ xác nhận");
+            
+            // Khôi phục trạng thái bàn về "Đã đặt"
+            if (danhSachBanTrongPhieu != null && !danhSachBanTrongPhieu.isEmpty()) {
+                for (String maBan : danhSachBanTrongPhieu) {
+                    banDAO.capNhatTrangThaiBan(maBan, "Đã đặt");
+                }
+            } else if (phieuDatBan.getBanAn() != null) {
+                banDAO.capNhatTrangThaiBan(phieuDatBan.getBanAn().getMaBan(), "Đã đặt");
+            }
+            
             JOptionPane.showMessageDialog(this,
-                "❌ Lỗi khi xác nhận phiếu: " + e.getMessage(),
-                "Lỗi", JOptionPane.ERROR_MESSAGE);
-
-            // Rollback
-            phieuDAO.capNhatTrangThaiPhieu(maPhieuDat, "Đã đặt");
-            banDAO.capNhatTrangThaiBan(maBan, "Đã đặt");
+                "❌ LỖI KHI XÁC NHẬN PHIẾU!\n\n" +
+                "Chi tiết lỗi: " + e.getMessage() + "\n\n" +
+                "Hệ thống đã khôi phục trạng thái ban đầu.",
+                "Lỗi", 
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 
-
-       
-//     Hủy phiếu đặt       
+    /**
+     * Hủy phiếu đặt bàn.
+     * Nếu hủy trước giờ đặt hoặc kịp thời, tiền cọc có thể được hoàn lại.
+     * hoàn tiền cọc nếu hủy trước 2 giờ.
+     */
     private void huyPhieu() {
-        int confirm = JOptionPane.showConfirmDialog(this, 
-            "Xác nhận hủy phiếu đặt?", 
-            "Xác nhận", 
-            JOptionPane.YES_NO_OPTION);
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            String maPhieu = phieuDatBan.getMaPhieuDat();
-            String maBan = phieuDatBan.getBanAn().getMaBan();
-
-            PhieuDatBanDAO phieuDAO = new PhieuDatBanDAO();
-            BanAnDAO banDAO = new BanAnDAO();
-
-            boolean huyOK = phieuDAO.huyPhieuDat(maPhieu);
-            boolean capNhatOK = banDAO.capNhatTrangThaiBan(maBan, "Trống");
-
-            if (huyOK && capNhatOK) {
-                JOptionPane.showMessageDialog(this, 
-                    "Đã hủy phiếu đặt thành công.\nBàn đã trở về trạng thái 'Trống'.", 
-                    "Thành công", 
-                    JOptionPane.INFORMATION_MESSAGE);
-                
-                // Làm mới lại danh sách bàn hoặc phiếu
-//                loadDanhSachBan(); 
-                
-                
-            } else {
-                JOptionPane.showMessageDialog(this, 
-                    "Không thể hủy phiếu. Vui lòng thử lại!", 
-                    "Lỗi", 
-                    JOptionPane.ERROR_MESSAGE);
-            }
+        if (phieuDatBan == null) {
+            JOptionPane.showMessageDialog(this,
+                "Không có thông tin phiếu đặt!",
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+        
+        double tienCoc = phieuDatBan.getSoTienCoc();
+        NumberFormat currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
+        
+        // Kiểm tra thời gian để quyết định hoàn cọc
+        LocalDate ngayDat = phieuDatBan.getNgayDat().toLocalDate();
+        int khungGio = phieuDatBan.getKhungGio();
+        LocalDateTime gioHenDat = tinhGioHen(ngayDat, khungGio);
+        LocalDateTime gioHienTai = LocalDateTime.now();
+        
+        boolean coHoanCoc = gioHienTai.isBefore(gioHenDat.minusHours(2));
+        String lyDo = coHoanCoc 
+            ? "Hủy trước 2 giờ → Hoàn tiền cọc"
+            : "Hủy muộn → Không hoàn cọc";
+        
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Xác nhận hủy phiếu đặt?\n\n" +
+            "Mã phiếu: " + phieuDatBan.getMaPhieuDat() + "\n" +
+            "Khách hàng: " + (phieuDatBan.getKhachHang() != null ? phieuDatBan.getKhachHang().getHoTen() : "Khách vãng lai") + "\n" +
+            "Tiền cọc: " + currencyFormat.format(tienCoc) + "đ\n\n" +
+            "⏰ " + lyDo,
+            "Xác nhận", 
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE);
+
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        String maPhieu = phieuDatBan.getMaPhieuDat();
+        PhieuDatBanDAO phieuDAO = new PhieuDatBanDAO();
+        BanAnDAO banDAO = new BanAnDAO();
+
+        try {
+            // 1. Cập nhật trạng thái phiếu sang "Đã hủy"
+            if (!phieuDAO.huyPhieuDat(maPhieu)) {
+                throw new Exception("Không thể cập nhật trạng thái phiếu!");
+            }
+
+            // 2. Cập nhật trạng thái TẤT CẢ bàn về "Trống"
+            if (danhSachBanTrongPhieu != null && !danhSachBanTrongPhieu.isEmpty()) {
+                for (String maBan : danhSachBanTrongPhieu) {
+                    if (!banDAO.capNhatTrangThaiBan(maBan, "Trống")) {
+                        System.err.println("⚠️ Không thể cập nhật bàn: " + maBan);
+                    }
+                }
+            } else if (phieuDatBan.getBanAn() != null) {
+                // Fallback: chỉ cập nhật bàn hiện tại
+                String maBan = phieuDatBan.getBanAn().getMaBan();
+                if (!banDAO.capNhatTrangThaiBan(maBan, "Trống")) {
+                    throw new Exception("Không thể cập nhật trạng thái bàn!");
+                }
+            }
+
+            // 3. Thông báo kết quả
+            String thongBao = "✅ Đã hủy phiếu đặt thành công!\n\n" +
+                "Tất cả bàn đã trở về trạng thái 'Trống'.\n";
+            
+            if (coHoanCoc && tienCoc > 0) {
+                thongBao += "💰 Hoàn tiền cọc: " + currencyFormat.format(tienCoc) + "đ";
+            } else if (tienCoc > 0) {
+                thongBao += "⚠️ Không hoàn tiền cọc (hủy muộn): " + currencyFormat.format(tienCoc) + "đ";
+            }
+            
+            JOptionPane.showMessageDialog(this, 
+                thongBao,
+                "Thành công", 
+                JOptionPane.INFORMATION_MESSAGE);
+            
+            dispose();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "❌ Lỗi khi hủy phiếu: " + e.getMessage(),
+                "Lỗi", 
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    /**
+     * Tính giờ hẹn dựa trên ngày đặt và khung giờ.
+     */
+    private LocalDateTime tinhGioHen(LocalDate ngayDat, int khungGio) {
+        int gioStart = 0;
+        switch (khungGio) {
+            case 1: gioStart = 6; break;   // Sáng 6-11h
+            case 2: gioStart = 11; break;  // Trưa 11-14h
+            case 3: gioStart = 14; break;  // Chiều 14-17h
+            case 4: gioStart = 17; break;  // Tối 17-22h
+            default: gioStart = 12;
+        }
+        return ngayDat.atTime(gioStart, 0);
     }
     
  

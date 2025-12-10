@@ -1,32 +1,13 @@
 package gui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
-
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -35,322 +16,344 @@ import dao.NhanVienDAO;
 import dao.TaiKhoanDAO;
 import entity.NhanVien;
 
-public class ThongTinCaNhan extends JPanel implements ActionListener{
+public class ThongTinCaNhan extends JPanel implements ActionListener {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private JTextField txtMaNV;
-	private JTextField txtTenNV;
-	private JTextField txtSdt;
-	private JTextField txtEmail;
-	private JLabel lblAnh;
-	private JDateChooser dcrNgayVaoLam;
-	private JDateChooser dcrNgaySinh;
-	private JButton btnLuu;
-	private JButton btnHuy;
-	private JComboBox<String> cbmGioiTinh;
-	
-	private NhanVienDAO nv_dao;
-	private TaiKhoanDAO tk_dao;
-	private JButton btnSua;
-	public static String maNVDanhNhap = null; //dang nhap thanh cong
-	private String duongDanAnh = "img/user.jpg"; // mặc định
+    private static final long serialVersionUID = 1L;
 
-	
-	public ThongTinCaNhan() {
-		ConnectDB.getInstance().connect();
-    	tk_dao = new TaiKhoanDAO();
-    	nv_dao = new NhanVienDAO();
-		
-		setLayout(new BorderLayout(10,10));
+    // === Components ===
+    private JTextField txtMaNV, txtTenNV, txtSdt, txtEmail;
+    private JDateChooser dcrNgaySinh, dcrNgayVaoLam;
+    private JComboBox<String> cboGioiTinh;
+    private JLabel lblAnh;
+    private JButton btnSua, btnLuu, btnHuy;
+
+    // === DAO ===
+    private NhanVienDAO nvDAO;
+    private TaiKhoanDAO tkDAO;
+
+    // === Default Image Path ===
+    private static final String DEFAULT_IMG = "/img/user.jpg";
+
+    public ThongTinCaNhan() {
+        ConnectDB.getInstance().connect();
+        nvDAO = new NhanVienDAO();
+        tkDAO = new TaiKhoanDAO();
+
+        setLayout(new BorderLayout());
         setBackground(Color.decode("#EAF1F9"));
+
+        // === Tiêu đề ===
         JLabel lblTitle = new JLabel("THÔNG TIN CÁ NHÂN", SwingConstants.CENTER);
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 22));
+        lblTitle.setFont(new Font("Arial", Font.BOLD, 24));
         lblTitle.setForeground(new Color(44, 62, 80));
-        lblTitle.setBorder(BorderFactory.createEmptyBorder(16,0,8,0));
+        lblTitle.setBorder(new EmptyBorder(20, 0, 10, 0));
         add(lblTitle, BorderLayout.NORTH);
-        
-        
-        JPanel pnCenter = new JPanel(new GridLayout(1, 2, 10, 0));
-        pnCenter.setOpaque(false);
-        add(pnCenter, BorderLayout.CENTER);
-        
-        //Bên trái
-        JPanel pnAnh = new JPanel(new GridBagLayout());
-        pnCenter.add(pnAnh);
-        pnAnh.setPreferredSize(new Dimension(200, 0)); // chiều rộng panel trái
-        pnAnh.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
-        
-        ImageIcon anhUser = new ImageIcon("img/user.jpg");
-    	Image imgUser = anhUser.getImage().getScaledInstance(300, 300, Image.SCALE_SMOOTH);
-    	anhUser = new ImageIcon(imgUser);
-    	
-    	lblAnh = new JLabel(anhUser);
-    	lblAnh.setHorizontalAlignment(SwingConstants.CENTER);
-    	pnAnh.add(lblAnh);
-    	
-    	
-    	//Form thông tin, bên phải
-    	JPanel pnForm = new JPanel();
-    	pnForm.setLayout(new GridBagLayout());
-    	pnForm.setOpaque(false);
-    	pnCenter.add(pnForm, BorderLayout.CENTER);
-    	GridBagConstraints gbc = new GridBagConstraints();
-    	gbc.insets = new Insets(10,  10,  10, 10);
-    	gbc.anchor = GridBagConstraints.WEST;
+
+        // === Nội dung chính (trong JScrollPane để responsive) ===
+        JPanel mainPanel = createMainPanel();
+        JScrollPane scrollPane = new JScrollPane(mainPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // === Load dữ liệu ===
+        loadThongTinCaNhan();
+    }
+
+    private JPanel createMainPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(15, 15, 15, 15);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        
-        int row = 0;
-    	//Mã nv
-        gbc.gridx = 0; 
-        gbc.gridy = row++;
-        JLabel lblMaNV = new JLabel("Mã nhân viên:");
-        pnForm.add(lblMaNV, gbc);
-        gbc.gridx = 1;
-        txtMaNV = new JTextField(15);
-        txtMaNV.setPreferredSize(new Dimension(200, 35));
-        txtMaNV.setEditable(false);
-        pnForm.add(txtMaNV, gbc);
-        
 
-    	//Họ tên
-        gbc.gridx = 0; 
-        gbc.gridy = row++;
-        JLabel lblTenNV = new JLabel("Họ nhân viên:");
-        pnForm.add(lblTenNV, gbc);
-        
-        gbc.gridx = 1;
-        txtTenNV = new JTextField(15);
-        txtTenNV.setPreferredSize(new Dimension(200, 35));
-        txtTenNV.setEditable(false);
-        pnForm.add(txtTenNV, gbc);
-        
-    	//Giới tính
-        gbc.gridx = 0; 
-        gbc.gridy = row++;
-        JLabel lblGioiTinh = new JLabel("Giới tính:");
-        pnForm.add(lblGioiTinh, gbc);
-
-        gbc.gridx = 1;
-        cbmGioiTinh  = new JComboBox<String>(new String[] {"Nam", "Nữ"});
-        cbmGioiTinh.setEnabled(false);
-        cbmGioiTinh.setPreferredSize(new Dimension(200, 35));
-        pnForm.add(cbmGioiTinh, gbc);
-    	
-    	//Ngày sinh
-        gbc.gridx = 0; gbc.gridy = row++;
-        JLabel lblNgaySinh = new JLabel("Ngày sinh:");
-        pnForm.add(lblNgaySinh, gbc);
-
-        gbc.gridx = 1;
-        dcrNgaySinh = new JDateChooser();
-        dcrNgaySinh.setDateFormatString("dd/MM/yyyy");
-        dcrNgaySinh.setEnabled(false);
-        dcrNgaySinh.setPreferredSize(new Dimension(200, 35));
-        pnForm.add(dcrNgaySinh, gbc);
-
-    	
-    	//Sđt
-        gbc.gridx = 0; gbc.gridy = row++;
-        JLabel lblSDT = new JLabel("Số điện thoại:");
-        lblSDT.setForeground(Color.decode("#2C3E50"));
-        pnForm.add(lblSDT, gbc);
-
-        gbc.gridx = 1;
-        txtSdt = new JTextField(15);
-        txtSdt.setEditable(false);
-        txtSdt.setPreferredSize(new Dimension(200, 35));
-        pnForm.add(txtSdt, gbc);
-    	
-    	//Email
-        gbc.gridx = 0; gbc.gridy = row++;
-    	JLabel lblEmail = new JLabel("Email");
-        lblSDT.setForeground(Color.decode("#2C3E50"));
-        pnForm.add(lblEmail, gbc);
-
-        gbc.gridx = 1;
-        txtEmail = new JTextField(15);
-        txtEmail.setEditable(false);
-        txtEmail.setPreferredSize(new Dimension(200, 35));
-        pnForm.add(txtEmail, gbc);
-        
-    	
-    	//Ngay vào làm
-        gbc.gridx = 0; gbc.gridy = row++;
-        JLabel lblNgayLam = new JLabel("Ngày vào làm");
-        lblSDT.setForeground(Color.decode("#2C3E50"));
-        pnForm.add(lblNgayLam, gbc);
-
-        gbc.gridx = 1;
-        dcrNgayVaoLam = new JDateChooser();
-        dcrNgayVaoLam.setDateFormatString("dd/MM/yyyy");
-        dcrNgayVaoLam.setEnabled(false);
-        dcrNgayVaoLam.setPreferredSize(new Dimension(200, 35));
-        pnForm.add(dcrNgayVaoLam, gbc);
-    	
-    	//các nút
-        gbc.gridy = row++;
+        // === Cột trái: Ảnh ===
+        JPanel pnAnh = createImagePanel();
         gbc.gridx = 0;
-        btnSua = new JButton("Sửa");
-        btnSua.setPreferredSize(new Dimension(200, 35));
-        pnForm.add(btnSua, gbc);
+        gbc.gridy = 0;
+        gbc.weightx = 0.35;
+        gbc.anchor = GridBagConstraints.NORTH;
+        panel.add(pnAnh, gbc);
+
+        // === Cột phải: Form ===
+        JPanel pnForm = createFormPanel();
+        gbc.gridx = 1;
+        gbc.weightx = 0.65;
+        panel.add(pnForm, gbc);
+
+        return panel;
+    }
+
+    private JPanel createImagePanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)), "Ảnh đại diện"));
+
+        lblAnh = new JLabel();
+        lblAnh.setHorizontalAlignment(SwingConstants.CENTER);
+        lblAnh.setPreferredSize(new Dimension(280, 280));
+        lblAnh.setMinimumSize(new Dimension(200, 200));
+        loadDefaultImage();
+
+        panel.add(lblAnh);
+        return panel;
+    }
+
+    private JPanel createFormPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)), "Thông tin cá nhân"));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 10, 8, 10);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        int row = 0;
+
+        // Mã NV
+        addFormRow(panel, gbc, row++, "Mã nhân viên:", txtMaNV = createUneditableField());
+        // Họ tên
+        addFormRow(panel, gbc, row++, "Họ tên:", txtTenNV = createUneditableField());
+        // Giới tính
+        addFormRow(panel, gbc, row++, "Giới tính:", cboGioiTinh = createUneditableCombo());
+        // Ngày sinh
+        addFormRow(panel, gbc, row++, "Ngày sinh:", dcrNgaySinh = createUneditableDateChooser());
+        // SĐT
+        addFormRow(panel, gbc, row++, "Số điện thoại:", txtSdt = createUneditableField());
+        // Email
+        addFormRow(panel, gbc, row++, "Email:", txtEmail = createUneditableField());
+        // Ngày vào làm
+        addFormRow(panel, gbc, row++, "Ngày vào làm:", dcrNgayVaoLam = createUneditableDateChooser());
+
+        // === Nút chức năng ===
+        JPanel pnButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        pnButtons.setOpaque(false);
+
+        btnSua = createButton("Sửa", "/img/edit.png");
+        btnLuu = createButton("Lưu", "/img/save.png");
+        btnHuy = createButton("Hủy", "/img/cancel.png");
+
+        pnButtons.add(btnSua);
+        pnButtons.add(btnLuu);
+        pnButtons.add(btnHuy);
 
         gbc.gridx = 1;
-        btnLuu = new JButton("Lưu");
-        btnLuu.setPreferredSize(new Dimension(200, 35));
-        pnForm.add(btnLuu, gbc);
-        
-        gbc.gridx = 2;
-        btnHuy = new JButton("Hủy");
-        btnHuy.setPreferredSize(new Dimension(200, 35));
-        pnForm.add(btnHuy, gbc);
-        
-        
-        
-        //Load dữ liệu
-        loadThongTinTuData(); 
-        
-        //xử lý sự kiện
-        btnHuy.addActionListener(this);
-        btnLuu.addActionListener(this);
+        gbc.gridy = row++;
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.EAST;
+        panel.add(pnButtons, gbc);
+
+        // === Gán sự kiện ===
         btnSua.addActionListener(this);
-	}
-	
-	private void loadThongTinTuData() {
-	    NhanVien nv = util.Session.getNhanVienDangNhap();
-	    if (nv == null) return; // chưa đăng nhập
+        btnLuu.addActionListener(this);
+        btnHuy.addActionListener(this);
 
-	    txtMaNV.setText(nv.getMaNV());
-	    txtTenNV.setText(nv.getHoTen());
-	    cbmGioiTinh.setSelectedItem(nv.isGioiTinh() ? "Nam" : "Nữ");
-	    txtEmail.setText(nv.getEmail());
-	    txtSdt.setText(nv.getSoDienThoai());
+        return panel;
+    }
 
-	    LocalDate localDate = nv.getNgaySinh();
-	    if (localDate != null) {
-	        dcrNgaySinh.setDate(Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-	    }
+    // === Helper Methods ===
 
-	    LocalDate localDate2 = nv.getNgayVaoLam();
-	    if (localDate2 != null) {
-	        dcrNgayVaoLam.setDate(Date.from(localDate2.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-	    }
+    private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, String label, JComponent field) {
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.weightx = 0.3;
+        panel.add(new JLabel(label), gbc);
 
-	    loadAnhNhanVien(nv.getAnhDaiDien());
-	}
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
+        field.setPreferredSize(new Dimension(220, 35));
+        panel.add(field, gbc);
+    }
 
-	private void loadAnhNhanVien(String duongDanAnh) {
-	    try {
-	        Image img = null;
-	        
-	        if (duongDanAnh != null && !duongDanAnh.trim().isEmpty()) {
-	            File f = new File(duongDanAnh);
-	            if (f.exists()) {
-	                img = new ImageIcon(duongDanAnh).getImage();
-	            }
-	        }
+    private JTextField createUneditableField() {
+        JTextField field = new JTextField(15);
+        field.setEditable(false);
+        return field;
+    }
 
-	        // Nếu không có ảnh nhân viên hoặc file không tồn tại → dùng ảnh mặc định
-	        if (img == null) {
-	            java.net.URL url = getClass().getResource("/img/user.jpg");
-	            if(url != null) {
-	                img = new ImageIcon(url).getImage();
-	            } else {
-	                System.out.println("Không tìm thấy ảnh mặc định!");
-	                return;
-	            }
-	        }
+    private JComboBox<String> createUneditableCombo() {
+        JComboBox<String> combo = new JComboBox<>(new String[]{"Nam", "Nữ"});
+        combo.setEnabled(false);
+        return combo;
+    }
 
-	        // Scale và set vào JLabel
-	        Image scaledImg = img.getScaledInstance(300, 300, Image.SCALE_SMOOTH);
-	        lblAnh.setIcon(new ImageIcon(scaledImg));
+    private JDateChooser createUneditableDateChooser() {
+        JDateChooser chooser = new JDateChooser();
+        chooser.setDateFormatString("dd/MM/yyyy");
+        chooser.setEnabled(false);
+        return chooser;
+    }
 
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
-	}
+    private JButton createButton(String text, String iconPath) {
+        JButton btn = new JButton(text);
+        try {
+            ImageIcon icon = new ImageIcon(getClass().getResource(iconPath));
+            Image img = icon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH);
+            btn.setIcon(new ImageIcon(img));
+        } catch (Exception e) {
+            // Nếu không load được icon → vẫn hiển thị text
+        }
+        btn.setPreferredSize(new Dimension(100, 35));
+        return btn;
+    }
 
+    // === Load & Display ===
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		Object o = e.getSource();
-		if(o.equals(btnLuu)) {
-			luu();
-		}
-		if(o.equals(btnSua)) {
-			sua();
-		}
-		if(o.equals(btnHuy)) {
-			huy();
-		}
-		
-	}
-	
-	private void sua() {
-		txtTenNV.setEditable(true);
-		cbmGioiTinh.setEnabled(true);
-		dcrNgaySinh.setEnabled(true);
-		txtSdt.setEditable(true);
-		txtEmail.setEditable(true);
-	}
-	private void luu() {
-	    try {
-	        String maNV = txtMaNV.getText().trim();
-	        String ten = txtTenNV.getText().trim();
-	        boolean gioiTinh = cbmGioiTinh.getSelectedItem().toString().equals("Nam");
-	        java.util.Date ngaySinhUtil = dcrNgaySinh.getDate();
-	        String sdt = txtSdt.getText().trim();
-	        String email = txtEmail.getText().trim();
+    private void loadThongTinCaNhan() {
+        NhanVien nv = util.Session.getNhanVienDangNhap();
+        if (nv == null) {
+            JOptionPane.showMessageDialog(this, "Chưa đăng nhập!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-	        // ====== Chuyển từ java.util.Date → LocalDate ======
-	        LocalDate ngaySinh = ngaySinhUtil.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        txtMaNV.setText(nv.getMaNV());
+        txtTenNV.setText(nv.getHoTen());
+        cboGioiTinh.setSelectedItem(nv.isGioiTinh() ? "Nam" : "Nữ");
+        txtSdt.setText(nv.getSoDienThoai());
+        txtEmail.setText(nv.getEmail());
 
-	        // ====== Tạo đối tượng nhân viên ======
-	        NhanVien nv = new NhanVien(maNV, ten, ngaySinh, email, ten, gioiTinh, email, ngaySinh, gioiTinh, ten);
-	        nv.setMaNV(maNV);
-	        nv.setHoTen(ten);
-	        nv.setGioiTinh(gioiTinh);
-	        nv.setNgaySinh(ngaySinh);
-	        nv.setSoDienThoai(sdt);
-	        nv.setEmail(email);
-	        nv.setAnhDaiDien(duongDanAnh); // ✅ Lưu đường dẫn ảnh hiện tại
+        setDate(dcrNgaySinh, nv.getNgaySinh());
+        setDate(dcrNgayVaoLam, nv.getNgayVaoLam());
 
-	        // ====== Gọi DAO cập nhật ======
-	        boolean kq = nv_dao.capNhatThongTinCaNhan(nv);
-	        if (kq) {
-	            JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
-	            huy();
-	        } else {
-	            JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
-	        }
+        loadAnhDaiDien(nv.getAnhDaiDien());
+    }
 
-	    } catch (Exception ex) {
-	        ex.printStackTrace();
-	        JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật thông tin!");
-	    }
-	}
+    private void setDate(JDateChooser chooser, LocalDate date) {
+        if (date != null) {
+            chooser.setDate(Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        }
+    }
 
+    private void loadAnhDaiDien(String path) {
+        ImageIcon icon = null;
+        if (path != null && !path.trim().isEmpty()) {
+            try {
+                File f = new File(path);
+                if (f.exists()) {
+                    icon = new ImageIcon(path);
+                }
+            } catch (Exception ignored) {}
+        }
 
-	private void huy() {
-		txtTenNV.setEditable(false);
-		cbmGioiTinh.setEnabled(false);
-		dcrNgaySinh.setEnabled(false);
-		txtSdt.setEditable(false);
-		txtEmail.setEditable(false);
-	}
-	
-	//test
-		public static void main(String[] args) {
-			SwingUtilities.invokeLater(() -> {
-				JFrame frame = new JFrame("Test - Thêm ca làm");
-				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-				frame.setSize(1200, 700);
-				frame.setLocationRelativeTo(null);
-				frame.add(new ThongTinCaNhan());
-				frame.setVisible(true);
-			});
-		}
-	
+        // Nếu không có ảnh → dùng ảnh mặc định từ resources
+        if (icon == null) {
+            java.net.URL url = getClass().getResource(DEFAULT_IMG);
+            if (url != null) {
+                icon = new ImageIcon(url);
+            }
+        }
+
+        if (icon != null) {
+            Image img = icon.getImage().getScaledInstance(280, 280, Image.SCALE_SMOOTH);
+            lblAnh.setIcon(new ImageIcon(img));
+        } else {
+            lblAnh.setIcon(null);
+            lblAnh.setText("<html><center>Không tải được ảnh<br>Ảnh mặc định lỗi</center></html>");
+        }
+    }
+
+    private void loadDefaultImage() {
+        java.net.URL url = getClass().getResource(DEFAULT_IMG);
+        if (url != null) {
+            ImageIcon icon = new ImageIcon(url);
+            Image img = icon.getImage().getScaledInstance(280, 280, Image.SCALE_SMOOTH);
+            lblAnh.setIcon(new ImageIcon(img));
+        }
+    }
+
+    // === Action Events ===
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == btnSua) {
+            enableEditing(true);
+        } else if (e.getSource() == btnLuu) {
+            luuThongTin();
+        } else if (e.getSource() == btnHuy) {
+            enableEditing(false);
+            loadThongTinCaNhan(); // Reset lại dữ liệu gốc
+        }
+    }
+
+    private void enableEditing(boolean enable) {
+        txtTenNV.setEditable(enable);
+        cboGioiTinh.setEnabled(enable);
+        dcrNgaySinh.setEnabled(enable);
+        txtSdt.setEditable(enable);
+        txtEmail.setEditable(enable);
+
+        btnLuu.setEnabled(enable);
+        btnHuy.setEnabled(enable);
+        btnSua.setEnabled(!enable);
+    }
+
+    private void luuThongTin() {
+        if (!validateInput()) return;
+
+        try {
+            NhanVien nv= new NhanVien();
+            nv.setMaNV(txtMaNV.getText().trim());
+            nv.setHoTen(txtTenNV.getText().trim());
+            nv.setGioiTinh(cboGioiTinh.getSelectedItem().equals("Nam"));
+            nv.setSoDienThoai(txtSdt.getText().trim());
+            nv.setEmail(txtEmail.getText().trim());
+
+            java.util.Date utilDate = dcrNgaySinh.getDate();
+            if (utilDate != null) {
+                nv.setNgaySinh(utilDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+            }
+
+            boolean success = nvDAO.capNhatThongTinCaNhan(nv);
+            if (success) {
+                JOptionPane.showMessageDialog(this, "Cập nhật thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                util.Session.capNhatNhanVien(nv); // Cập nhật session
+                enableEditing(false);
+            } else {
+                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private boolean validateInput() {
+        if (txtTenNV.getText().trim().isEmpty()) {
+            showError("Họ tên không được để trống!");
+            return false;
+        }
+        if (!txtSdt.getText().trim().matches("\\d{10,11}")) {
+            showError("Số điện thoại phải có 10-11 chữ số!");
+            return false;
+        }
+        if (!txtEmail.getText().trim().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+            showError("Email không hợp lệ!");
+            return false;
+        }
+        if (dcrNgaySinh.getDate() == null) {
+            showError("Vui lòng chọn ngày sinh!");
+            return false;
+        }
+        return true;
+    }
+
+    private void showError(String msg) {
+        JOptionPane.showMessageDialog(this, msg, "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+    }
+
+    // === Test ===
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Thông tin cá nhân");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1000, 650);
+            frame.setMinimumSize(new Dimension(800, 500));
+            frame.setLocationRelativeTo(null);
+            frame.add(new ThongTinCaNhan());
+            frame.setVisible(true);
+        });
+    }
 }

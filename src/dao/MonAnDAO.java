@@ -82,10 +82,11 @@ public class MonAnDAO {
         else return "Món ăn kèm";
     }
 
-    // ========== THÊM MÓN MỚI - CÓ LOGGING ==========
+ // ========== THÊM MÓN MỚI - HỖ TRỢ LƯU NULL CHO SỐ LƯỢNG ==========
     public boolean themMonMoi(MonAn mon, String maNVThaoTac) {
-    	Connection con = ConnectDB.getConnection();
-        String sql = "INSERT INTO MonAn (maMon, tenMon, gia, donViTinh, trangThai, hinhAnh, soLuong, moTa, maLoaiMon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        Connection con = ConnectDB.getConnection();
+        String sql = "INSERT INTO MonAn (maMon, tenMon, gia, donViTinh, trangThai, hinhAnh, soLuong, moTa, maLoaiMon) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, mon.getMaMon());
             stmt.setString(2, mon.getTenMon());
@@ -93,31 +94,34 @@ public class MonAnDAO {
             stmt.setString(4, mon.getDonViTinh());
             stmt.setBoolean(5, mon.isTrangThai());
             stmt.setString(6, mon.getHinhAnh());
-            stmt.setInt(7, mon.getSoLuong());
+            
+            // Xử lý soLuong: nếu = 0 và không có giá trị thực → coi như NULL
+            if (mon.getSoLuong() == 0) {
+                stmt.setNull(7, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(7, mon.getSoLuong());
+            }
+            
             stmt.setString(8, mon.getMoTa());
             stmt.setString(9, mon.getLoaiMon());
-            
+
             boolean result = stmt.executeUpdate() > 0;
-            
-            // GHI LOG nếu thành công
+
             if (result && maNVThaoTac != null) {
                 logDAO.logThem(maNVThaoTac, mon, "Thêm món ăn mới");
             }
-            
             return result;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
-    
-   
 
-    // ========== SỬA MÓN ĂN - CÓ LOGGING ==========
+    // ========== SỬA MÓN ĂN - HỖ TRỢ LƯU NULL CHO SỐ LƯỢNG ==========
     public boolean suaMonAn(MonAn mon, String maNVThaoTac) {
-        // Lấy dữ liệu cũ trước khi cập nhật
         MonAn monCu = layMonAnTheoMa(mon.getMaMon());
-        
+        if (monCu == null) return false;
+
         String sql = "UPDATE MonAn SET tenMon = ?, gia = ?, donViTinh = ?, trangThai = ?, hinhAnh = ?, soLuong = ?, moTa = ?, maLoaiMon = ? WHERE maMon = ?";
         Connection con = ConnectDB.getConnection();
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -126,26 +130,29 @@ public class MonAnDAO {
             stmt.setString(3, mon.getDonViTinh());
             stmt.setBoolean(4, mon.isTrangThai());
             stmt.setString(5, mon.getHinhAnh());
-            stmt.setInt(6, mon.getSoLuong());
+
+            // Xử lý soLuong: nếu = 0 → coi như người dùng muốn xóa số lượng → lưu NULL
+            if (mon.getSoLuong() == 0) {
+                stmt.setNull(6, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(6, mon.getSoLuong());
+            }
+
             stmt.setString(7, mon.getMoTa());
-            stmt.setString(8, mon.getLoaiMon()); 
+            stmt.setString(8, mon.getLoaiMon());
             stmt.setString(9, mon.getMaMon());
-            
+
             boolean result = stmt.executeUpdate() > 0;
-            
-            // GHI LOG nếu thành công
+
             if (result && maNVThaoTac != null && monCu != null) {
                 logDAO.logSua(maNVThaoTac, monCu, mon, "Cập nhật thông tin món ăn");
             }
-            
             return result;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
-    
-    
 
     // ========== ẨN MÓN ĂN - CÓ LOGGING ==========
     public boolean anMonAn(String maMon, String maNVThaoTac) throws SQLException {
@@ -173,8 +180,6 @@ public class MonAnDAO {
             return result;
         }
     }
-    
-    
 
     public ArrayList<String> layRaLoaiMonAn() throws SQLException {
         ArrayList<String> dsTenLoaiMonAn = new ArrayList<>();
@@ -256,5 +261,167 @@ public class MonAnDAO {
             }
         }
         return tenLoai; // fallback
+    }
+    
+    // ============================================================
+    // ✅ TRỪ TỒN KHO - OVERLOAD NHẬN CONNECTION (CHO TRANSACTION)
+    // ============================================================
+    public boolean truTonKho(Connection con, String maMon, int soLuongTru, String maNVThaoTac) {
+        MonAn mon = layMonAnTheoMa(maMon);
+        if (mon == null) return false;
+
+        // Nếu soLuong == 0 → món KHÔNG quản lý tồn kho → cho đặt thoải mái
+        if (mon.getSoLuong() <= 0) {
+            if (maNVThaoTac != null) {
+                logDAO.logDonGian(con, maNVThaoTac, LoaiThaoTac.SUA, "MonAn", maMon,
+                    "Không kiểm tra tồn (soLuong = 0) → cho phép đặt " + soLuongTru + " phần",
+                    "Đặt món không giới hạn tồn kho (mì cay, combo, ...)");
+            }
+            return true; // Cho phép đặt
+        }
+
+        // Nếu soLuong > 0 → có quản lý tồn → phải kiểm tra đủ hàng
+        if (mon.getSoLuong() < soLuongTru) {
+            return false; // Không đủ hàng
+        }
+
+        String sql = "UPDATE MonAn SET soLuong = soLuong - ? WHERE maMon = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, soLuongTru);
+            ps.setString(2, maMon);
+
+            boolean result = ps.executeUpdate() > 0;
+
+            if (result && maNVThaoTac != null) {
+                logDAO.logDonGian(con, maNVThaoTac, LoaiThaoTac.SUA, "MonAn", maMon,
+                    String.format("Tồn kho: %d → %d (-%d)", mon.getSoLuong(), mon.getSoLuong() - soLuongTru, soLuongTru),
+                    "Trừ tồn kho khi đặt món");
+            }
+            return result;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // ✅ TRỪ TỒN KHO - METHOD CŨ (GIỮ LẠI ĐỂ TƯƠNG THÍCH)
+    public boolean truTonKho(String maMon, int soLuongTru, String maNVThaoTac) {
+        MonAn mon = layMonAnTheoMa(maMon);
+        if (mon == null) return false;
+
+        // Nếu soLuong == 0 → món KHÔNG quản lý tồn kho → cho đặt thoải mái
+        if (mon.getSoLuong() <= 0) {
+            if (maNVThaoTac != null) {
+                logDAO.logDonGian(maNVThaoTac, LoaiThaoTac.SUA, "MonAn", maMon,
+                    "Không kiểm tra tồn (soLuong = 0) → cho phép đặt " + soLuongTru + " phần",
+                    "Đặt món không giới hạn tồn kho (mì cay, combo, ...)");
+            }
+            return true; // Cho phép đặt
+        }
+
+        // Nếu soLuong > 0 → có quản lý tồn → phải kiểm tra đủ hàng
+        if (mon.getSoLuong() < soLuongTru) {
+            return false; // Không đủ hàng
+        }
+
+        String sql = "UPDATE MonAn SET soLuong = soLuong - ? WHERE maMon = ?";
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, soLuongTru);
+            ps.setString(2, maMon);
+
+            boolean result = ps.executeUpdate() > 0;
+
+            if (result && maNVThaoTac != null) {
+                logDAO.logDonGian(maNVThaoTac, LoaiThaoTac.SUA, "MonAn", maMon,
+                    String.format("Tồn kho: %d → %d (-%d)", mon.getSoLuong(), mon.getSoLuong() - soLuongTru, soLuongTru),
+                    "Trừ tồn kho khi đặt món");
+            }
+            return result;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // ============================================================
+    // ✅ CỘNG LẠI TỒN KHO - OVERLOAD NHẬN CONNECTION (CHO TRANSACTION)
+    // ============================================================
+    public boolean congLaiTonKho(Connection con, String maMon, int soLuongCong, String maNVThaoTac) {
+        MonAn mon = layMonAnTheoMa(maMon);
+        if (mon == null) return false;
+
+        // Nếu soLuong ban đầu <= 0 → không quản lý tồn → không cần cộng lại
+        if (mon.getSoLuong() <= 0) {
+            return true; // Vẫn cho phép xóa
+        }
+
+        String sql = "UPDATE MonAn SET soLuong = soLuong + ? WHERE maMon = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, soLuongCong);
+            ps.setString(2, maMon);
+
+            boolean result = ps.executeUpdate() > 0;
+
+            if (result && maNVThaoTac != null) {
+                int tonMoi = mon.getSoLuong() + soLuongCong;
+                logDAO.logDonGian(con, maNVThaoTac, LoaiThaoTac.SUA, "MonAn", maMon,
+                    String.format("Tồn kho: %d → %d (+%d)", mon.getSoLuong(), tonMoi, soLuongCong),
+                    "Hoàn tồn kho khi xóa món khỏi hóa đơn");
+            }
+            return result;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // ✅ CỘNG LẠI TỒN KHO - METHOD CŨ (GIỮ LẠI ĐỂ TƯƠNG THÍCH)
+    public boolean congLaiTonKho(String maMon, int soLuongCong, String maNVThaoTac) {
+        MonAn mon = layMonAnTheoMa(maMon);
+        if (mon == null) return false;
+
+        // Nếu soLuong ban đầu <= 0 → không quản lý tồn → không cần cộng lại
+        if (mon.getSoLuong() <= 0) {
+            return true; // Vẫn cho phép xóa
+        }
+
+        String sql = "UPDATE MonAn SET soLuong = soLuong + ? WHERE maMon = ?";
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, soLuongCong);
+            ps.setString(2, maMon);
+
+            boolean result = ps.executeUpdate() > 0;
+
+            if (result && maNVThaoTac != null) {
+                int tonMoi = mon.getSoLuong() + soLuongCong;
+                logDAO.logDonGian(maNVThaoTac, LoaiThaoTac.SUA, "MonAn", maMon,
+                    String.format("Tồn kho: %d → %d (+%d)", mon.getSoLuong(), tonMoi, soLuongCong),
+                    "Hoàn tồn kho khi xóa món khỏi hóa đơn");
+            }
+            return result;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+ // === THÊM PHƯƠNG THỨC KIỂM TRA TRÙNG TÊN MÓN TRONG MonAnDAO ===
+    public boolean kiemTraTenMonTrung(String tenMon, String maMonHienTai) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM MonAn WHERE tenMon = ? AND trangThai = 1";
+        if (maMonHienTai != null && !maMonHienTai.trim().isEmpty()) {
+            sql += " AND maMon != ?";
+        }
+        try (PreparedStatement ps = ConnectDB.getConnection().prepareStatement(sql)) {
+            ps.setString(1, tenMon);
+            if (maMonHienTai != null && !maMonHienTai.trim().isEmpty()) {
+                ps.setString(2, maMonHienTai);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1) > 0;
+            }
+        }
+        return false;
     }
 }

@@ -35,7 +35,17 @@ public class ManHinhChinhNhanVien extends JFrame {
         mainPanelRef.repaint();
     }
 
-   
+    
+    public static void main(String[] args) {
+        EventQueue.invokeLater(() -> {
+            try {
+                ManHinhChinhNhanVien frame = new ManHinhChinhNhanVien();
+                frame.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
    
     public ManHinhChinhNhanVien() {
         setLocationRelativeTo(null);
@@ -89,6 +99,7 @@ public class ManHinhChinhNhanVien extends JFrame {
         MenuBuilder menuBuilder = new MenuBuilder();
         menuBar.add(menuBuilder.createTrangChu());
         menuBar.add(menuBuilder.createBanAnMenu());
+        menuBar.add(menuBuilder.createPhieuDatMenu());
         menuBar.add(menuBuilder.createKhachHangMenu());
         menuBar.add(menuBuilder.createHoaDonMenu());
         menuBar.add(menuBuilder.createLichLamMenu());
@@ -155,10 +166,18 @@ public class ManHinhChinhNhanVien extends JFrame {
 
         public JMenu createBanAnMenu() {
             JMenu menu = createMenu("Bàn ăn");
-            menu.add(createMenuItem("Danh sách bàn ăn", e -> showPanel(new KhuVuc())));
+//            menu.add(createMenuItem("Danh sách bàn ăn", e -> showPanel(new KhuVuc())));
+            menu.add(createMenuItem("Sơ đồ bàn ăn", e -> showPanel(new SoDoBanAn())));
             menu.add(createMenuItem("Tra cứu", e-> showPanel(new TraCuuBanAn())));
             menu.add(createMenuItem("Đặt bàn", e-> showPanel(new DatBan())));
            
+            return menu;
+        }
+        
+        public JMenu createPhieuDatMenu() {
+            JMenu menu = createMenu("Phiếu đặt");
+            menu.add(createMenuItem("Tra cứu", e -> showPanel(new TraCuuPhieuDat())));
+            
             return menu;
         }
 
@@ -173,9 +192,13 @@ public class ManHinhChinhNhanVien extends JFrame {
         public JMenu createHoaDonMenu() {
             JMenu menu = createMenu("Hóa đơn");
             menu.add(createMenuItem("Tra cứu hóa đơn", e-> showPanel(new TraCuuHoaDon())));
-//            menu.add(createMenuItem("Thống kê theo ngày", e->showPanel(new ManHinhThongKeHoaDonTheoNgay())));
+            menu.add(createMenuItem("Thống kê trong năm", e->showPanel(new ManHinhThongKeHoaDonTheoNam())));
+            menu.add(createMenuItem("Thống kê trong ng", e->showPanel(new ManHinhThongKeHoaDonTheoNgay())));
+            menu.add(createMenuItem("Thống kê trong th", e->showPanel(new ManHinhThongKeHoaDonTheoThang())));
             return menu;
         }
+        
+        
 
         public JMenu createLichLamMenu() {
             JMenu menu = createMenu("Lịch làm");

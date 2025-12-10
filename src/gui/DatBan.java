@@ -22,6 +22,8 @@ import entity.NhanVien;
 import entity.PhieuDatBan;
 import util.Session;
 
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -39,6 +41,9 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
     private JComboBox<String> cboKhuVuc;
     private JComboBox<String> cboLoaiBan;
     private JTextArea txtGhiChu;
+    
+    private List<String> danhSachBanDaChon = new ArrayList<>(); // Lưu mã bàn
+    private JTextArea txtDanhSachBanDaChon; // Hiển thị danh sách bàn đã chọn
     
     private JTable tableBanTrong;
     private DefaultTableModel tableModel;
@@ -59,6 +64,11 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
     private final Color MAU_CAM_SANG = new Color(234, 136, 96); // HOVER_COLOR
     private final Color BACKGROUND_COLOR = new Color(245, 245, 245);
     private final Color SUCCESS_COLOR = new Color(76, 175, 80);
+    
+    private static final int KHUNG_SANG = 1;    // 06:00 - 11:00
+    private static final int KHUNG_TRUA = 2;    // 11:00 - 14:00
+    private static final int KHUNG_CHIEU = 3;   // 14:00 - 17:00
+    private static final int KHUNG_TOI = 4;     // 17:00 - 22:00
 
 	private JButton btnDatMon;
 
@@ -193,6 +203,13 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         spinnerGioDat = new JSpinner(spinnerModel);
         JSpinner.DateEditor editor = new JSpinner.DateEditor(spinnerGioDat, "HH:mm");
         spinnerGioDat.setEditor(editor);
+        
+        // Set giờ mặc định 08:00
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 8);
+        cal.set(Calendar.MINUTE, 0);
+        spinnerGioDat.setValue(cal.getTime());
+        
         spinnerGioDat.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         addFormField(formPanel, gbc, row++, "Giờ đặt: *", spinnerGioDat);
         
@@ -229,6 +246,18 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         
         // Nút tìm bàn
         btnTimBan = createButton("Tìm bàn trống", MAU_CAM);
+        btnTimBan.addActionListener(e -> {
+            // Kiểm tra đã chọn ngày giờ chưa
+            if (dateChooserNgayDat.getDate() == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Vui lòng chọn ngày đặt trước!",
+                    "Thông báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            loadDanhSachBanTrong(); // Load lại với khung giờ mới
+        });
+        
         btnTimBan.setPreferredSize(new Dimension(0, 35));
         gbc.gridx = 0;
         gbc.gridy = row++;
@@ -251,6 +280,22 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         txtSoTienCoc = createTextField();
         txtSoTienCoc.setText("0");
         addFormField(formPanel, gbc, row++, "Số tiền cọc:", txtSoTienCoc);
+        
+     // Danh sách bàn đã chọn
+        txtDanhSachBanDaChon = new JTextArea(3, 20);
+        txtDanhSachBanDaChon.setEditable(false);
+        txtDanhSachBanDaChon.setBackground(new Color(240, 240, 240));
+        txtDanhSachBanDaChon.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        txtDanhSachBanDaChon.setLineWrap(true);
+        txtDanhSachBanDaChon.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(200, 200, 200)),
+            new EmptyBorder(5, 8, 5, 8)
+        ));
+        JScrollPane scrollBanDaChon = new JScrollPane(txtDanhSachBanDaChon);
+        scrollBanDaChon.setPreferredSize(new Dimension(0, 70));
+
+        addFormField(formPanel, gbc, row++, "Bàn đã chọn:", scrollBanDaChon);
+        
         
         // Ghi chú
         txtGhiChu = new JTextArea(3, 20);
@@ -359,7 +404,7 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         infoPanel.setBackground(new Color(232, 245, 233));
         infoPanel.setBorder(new EmptyBorder(8, 10, 8, 10));
-        JLabel lblTableInfo = new JLabel("Chọn một bàn trong danh sách để đặt");
+        JLabel lblTableInfo = new JLabel("Click vào bàn để thêm/bỏ chọn (Có thể chọn nhiều bàn)");
         lblTableInfo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblTableInfo.setForeground(new Color(46, 125, 50));
         infoPanel.add(lblTableInfo);
@@ -397,34 +442,72 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
     }
     
     
+    /**
+     * Tải danh sách bàn trống theo ngày và giờ đã chọn.
+     * Chỉ hiển thị bàn khả dụng trong khung giờ cụ thể.
+     */
     private void loadDanhSachBanTrong() {
-		// TODO Auto-generated method stub
-    	try {
-    		tableModel.setRowCount(0);
-        	List<BanAn> dsBanTrong= banAnDAO.getDSBanTrong();
-        	if (dsBanTrong == null || dsBanTrong.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Không có bàn trống hoặc lỗi kết nối cơ sở dữ liệu!");
+        try {
+            tableModel.setRowCount(0);
+            danhSachBanDaChon.clear();
+            txtDanhSachBanDaChon.setText("Chưa chọn bàn nào");
+
+            Date ngayDat = dateChooserNgayDat.getDate();
+            Date gioDat = (Date) spinnerGioDat.getValue();
+
+            List<BanAn> dsBanTrong;
+
+            if (ngayDat != null && gioDat != null) {
+                Calendar calNgay = Calendar.getInstance();
+                calNgay.setTime(ngayDat);
+
+                Calendar calGio = Calendar.getInstance();
+                calGio.setTime(gioDat);
+
+                calNgay.set(Calendar.HOUR_OF_DAY, calGio.get(Calendar.HOUR_OF_DAY));
+                calNgay.set(Calendar.MINUTE, calGio.get(Calendar.MINUTE));
+                calNgay.set(Calendar.SECOND, 0);
+
+                LocalDateTime ngayGioDat = new java.sql.Timestamp(
+                    calNgay.getTimeInMillis()).toLocalDateTime();
+
+                int khungGio = xacDinhKhungGio(ngayGioDat.getHour());
+
+                // Sử dụng hàm lấy bàn trống theo khung giờ
+                dsBanTrong = banAnDAO.getDSBanTrongTheoKhungGio(
+                    ngayGioDat.toLocalDate(), khungGio
+                );
+            } else {
+                // Nếu chưa chọn ngày giờ, hiển thị tất cả bàn trống hiện tại
+                dsBanTrong = banAnDAO.getDSBanTrong();
+            }
+
+            if (dsBanTrong == null || dsBanTrong.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                    "Không có bàn trống trong khung giờ này!",
+                    "Thông báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-        	for(BanAn ban: dsBanTrong) {
-        		tableModel.addRow(new Object[] {
-        				ban.getMaBan(),
-        				ban.getTenBan(),
-        				ban.getSoLuongCho(),
-        				ban.getLoaiBan().getTenLoaiBan(),
-        				ban.getKhuVuc() !=null ? ban.getKhuVuc().getTenKhuVuc(): "",
-        				ban.getGhiChu()
-        				
-        		});
-        	}
-        	
-		} catch (Exception e) {
-			e.printStackTrace();
-			JOptionPane.showMessageDialog(this, "Lỗi khi tải dữ liệu "+e.getMessage());
-		}
-    	
-		
-	}
+
+            for (BanAn ban : dsBanTrong) {
+                tableModel.addRow(new Object[]{
+                    ban.getMaBan(),
+                    ban.getTenBan(),
+                    ban.getSoLuongCho(),
+                    ban.getLoaiBan().getTenLoaiBan(),
+                    ban.getKhuVuc() != null ? ban.getKhuVuc().getTenKhuVuc() : "",
+                    ban.getGhiChu()
+                });
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Lỗi khi tải danh sách bàn: " + e.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     
     // them field vào form
     private void addFormField(JPanel panel, GridBagConstraints gbc, int row, 
@@ -721,150 +804,222 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
 	}
 
 
+	// ================================
+	// FIX CHO FILE DatBan.java
+	// Thêm validation trước khi lưu phiếu đặt
+	// ================================
+
 	private void datBan() {
-	    // Kiểm tra đã chọn bàn chưa
-	    int selectedRow = tableBanTrong.getSelectedRow();
-	    if (selectedRow == -1) {
+	    // 1. KIỂM TRA CƠ BẢN
+	    if (danhSachBanDaChon.isEmpty()) {
 	        JOptionPane.showMessageDialog(this,
-	            "Vui lòng chọn một bàn để đặt!",
+	            "Vui lòng chọn ít nhất một bàn để đặt!",
 	            "Thông báo", JOptionPane.WARNING_MESSAGE);
 	        return;
 	    }
 
 	    try {
-	        // Lấy thông tin bàn
-	        String maBan = tableModel.getValueAt(selectedRow, 0).toString();
-	        String tenBan = tableModel.getValueAt(selectedRow, 1).toString();
-	        
-	        int soCho = Integer.parseInt(tableModel.getValueAt(selectedRow, 2).toString());
-	        
-	        int soNguoi = Integer.parseInt(txtSoNguoi.getText().trim());
-	        
-//	        System.out.println("soCho = " + soCho);
-//	        System.out.println("soNguoi = " + soNguoi);
-	        
-	     // RÀNG BUỘC: số người không vượt quá số chỗ
-	        if (soNguoi > soCho) {
-	            JOptionPane.showMessageDialog(this,
-	                "Số người (" + soNguoi + ") không được vượt quá số chỗ của bàn (" + soCho + ")!",
-	                "Thông báo", JOptionPane.WARNING_MESSAGE);
-	            return;
-	        }
-
-	        // Lấy ngày và giờ
+	        // 2. XỬ LÝ NGÀY GIỜ
 	        Date ngayDat = dateChooserNgayDat.getDate();
 	        Date gioDat = (Date) spinnerGioDat.getValue();
 	        
 	        if (ngayDat == null) {
 	            JOptionPane.showMessageDialog(this, 
-	                "Vui lòng chọn ngày đặt bàn trước khi xác nhận!",
-	                "Thiếu thông tin", 
-	                JOptionPane.WARNING_MESSAGE);
+	                "Vui lòng chọn ngày đặt!", 
+	                "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
 	            return;
 	        }
 
 	        java.util.Calendar calNgay = java.util.Calendar.getInstance();
 	        calNgay.setTime(ngayDat);
-	        if (ngayDat == null) ngayDat = new Date();
 	        java.util.Calendar calGio = java.util.Calendar.getInstance();
 	        calGio.setTime(gioDat);
 
 	        calNgay.set(java.util.Calendar.HOUR_OF_DAY, calGio.get(java.util.Calendar.HOUR_OF_DAY));
 	        calNgay.set(java.util.Calendar.MINUTE, calGio.get(java.util.Calendar.MINUTE));
+	        calNgay.set(java.util.Calendar.SECOND, 0);
 
 	        LocalDateTime ngayGioDat = new java.sql.Timestamp(calNgay.getTimeInMillis()).toLocalDateTime();
+	        int khungGio = xacDinhKhungGio(ngayGioDat.getHour());
 
-	        
-	        String soTienText = txtSoTienCoc.getText().trim();
+	        // 3. KIỂM TRA KHÔNG ĐẶT QUÁ KHỨ
+	        if (ngayGioDat.isBefore(LocalDateTime.now())) {
+	            JOptionPane.showMessageDialog(this, 
+	                "Thời gian đặt bàn không hợp lệ!\nKhông thể đặt cho thời điểm trong quá khứ.",
+	                "Lỗi thời gian", JOptionPane.ERROR_MESSAGE);
+	            return;
+	        }
 
-	     // Loại bỏ mọi ký tự không phải số hoặc dấu chấm
-	        soTienText = soTienText.replaceAll("[^0-9.]", "");
+	        // ============================================
+	        // 🔥 THÊM: KIỂM TRA BÀN CÓ KHẢ DỤNG KHÔNG
+	        // ============================================
+	        List<String> banKhongKhaDung = new ArrayList<>();
+	        for (String maBan : danhSachBanDaChon) {
+	            if (!banAnDAO.kiemTraBanKhaDung(maBan, ngayGioDat.toLocalDate(), khungGio)) {
+	                String tenBan = timTenBanTheoMa(maBan);
+	                banKhongKhaDung.add(tenBan + " (" + maBan + ")");
+	            }
+	        }
 
-	     // Kiểm tra chuỗi trống và chuyển đổi an toàn
-		     double soTienCoc = 0;
-		     if (!soTienText.isEmpty()) {
-		         try {
-		             soTienCoc = Double.parseDouble(soTienText);
-		         } catch (NumberFormatException e) {
-		             System.err.println("Giá trị tiền cọc không hợp lệ: " + soTienText);
-		         }
-		     }
+	        if (!banKhongKhaDung.isEmpty()) {
+	            JOptionPane.showMessageDialog(this,
+	                "Các bàn sau đã bị đặt trong khung giờ này:\n\n" + 
+	                String.join("\n", banKhongKhaDung) + "\n\n" +
+	                "Vui lòng chọn bàn khác hoặc khung giờ khác!",
+	                "Bàn không khả dụng", JOptionPane.WARNING_MESSAGE);
+	            return;
+	        }
+
+	        // 4. VALIDATE SỐ NGƯỜI
+	        String soNguoiStr = txtSoNguoi.getText().trim();
+	        if (soNguoiStr.isEmpty() || !soNguoiStr.matches("\\d+")) {
+	            JOptionPane.showMessageDialog(this, 
+	                "Vui lòng nhập số người hợp lệ!", 
+	                "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            txtSoNguoi.requestFocus();
+	            return;
+	        }
+	        int soNguoi = Integer.parseInt(soNguoiStr);
+
+	        // Tính tổng số chỗ
+	        int tongSoCho = 0;
+	        StringBuilder dsBanText = new StringBuilder();
+	        for (String maBan : danhSachBanDaChon) {
+	            String tenBan = timTenBanTheoMa(maBan);
+	            int soCho = laySoChoTheoMaBan(maBan);
+	            tongSoCho += soCho;
+	            dsBanText.append("- ").append(tenBan).append(" (").append(soCho).append(" chỗ)").append("\n");
+	        }
+
+	        // Cảnh báo quá tải
+	        if (soNguoi > tongSoCho) {
+	            int confirmCho = JOptionPane.showConfirmDialog(this,
+	                "Cảnh báo: Số người (" + soNguoi + ") vượt quá tổng số chỗ (" + tongSoCho + ")!\n" +
+	                "Bạn có chắc chắn muốn tiếp tục không?",
+	                "Cảnh báo quá tải", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+	            if (confirmCho != JOptionPane.YES_OPTION) return;
+	        }
+
+	        // 5. XỬ LÝ TIỀN CỌC
+	        String soTienText = txtSoTienCoc.getText().trim().replaceAll("[^0-9.]", "");
+	        double soTienCoc = 0;
+	        if (!soTienText.isEmpty()) {
+	            try {
+	                soTienCoc = Double.parseDouble(soTienText);
+	            } catch (NumberFormatException e) {
+	                JOptionPane.showMessageDialog(this, 
+	                    "Tiền cọc không hợp lệ!", 
+	                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+	                return;
+	            }
+	        }
 
 	        String ghiChu = txtGhiChu.getText().trim();
 
-	        // Xác nhận
-	        int confirm = JOptionPane.showConfirmDialog(this,
-	            "Xác nhận đặt bàn?\n\n" +
-	            "Bàn: " + tenBan + "\n" +
-	            "Khách hàng: " + txtTenKhachHang.getText() + "\n" +
-	            "Ngày giờ: " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(calNgay.getTime()) + "\n" +
-	            "Số người: " + soNguoi + "\n" +
-	            "Tiền cọc: " + String.format("%,.0f", soTienCoc) + "đ",
-	            "Xác nhận", JOptionPane.YES_NO_OPTION);
-
-	        if (confirm != JOptionPane.YES_OPTION) {
+	        // 6. KIỂM TRA KHÁCH HÀNG
+	        KhachHang kh = (maKhachHang != null) ? new KhachHang(maKhachHang) : null;
+	        if (kh == null) {
+	            JOptionPane.showMessageDialog(this, 
+	                "Vui lòng chọn khách hàng!", 
+	                "Thông báo", JOptionPane.WARNING_MESSAGE);
 	            return;
 	        }
-	        
-	     // ✅ LẤY NHÂN VIÊN TỪ SESSION
+
+	        // 7. XÁC NHẬN CUỐI CÙNG
+	        int confirm = JOptionPane.showConfirmDialog(this,
+	            "XÁC NHẬN ĐẶT BÀN?\n\n" +
+	            "Khách hàng: " + txtTenKhachHang.getText() + "\n" +
+	            "Thời gian: " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(calNgay.getTime()) + "\n" +
+	            "Số người: " + soNguoi + "\n" +
+	            "Tiền cọc: " + String.format("%,.0f", soTienCoc) + " VNĐ\n" +
+	            "Danh sách bàn (" + danhSachBanDaChon.size() + " bàn):\n" + dsBanText.toString(),
+	            "Xác nhận", JOptionPane.YES_NO_OPTION);
+
+	        if (confirm != JOptionPane.YES_OPTION) return;
+
+	        // 8. LẤY NHÂN VIÊN
 	        NhanVien nhanVienDangNhap = util.Session.getNhanVienDangNhap();
-	        
 	        if (nhanVienDangNhap == null) {
-	            JOptionPane.showMessageDialog(this,
-	                "Lỗi: Không tìm thấy thông tin nhân viên đăng nhập!\n" +
-	                "Vui lòng đăng nhập lại.",
+	            JOptionPane.showMessageDialog(this, 
+	                "Phiên đăng nhập đã hết hạn!", 
 	                "Lỗi", JOptionPane.ERROR_MESSAGE);
 	            return;
 	        }
 
-	        // Khởi tạo các đối tượng liên quan
-	        KhachHang kh = new KhachHang(maKhachHang);
-//	        NhanVien nv = util.Session.nhanVienDangNhap;
-	        BanAn ban = new BanAn(maBan);
-
-	        // Tạo phiếu đặt bàn
+	        // 9. TẠO PHIẾU ĐẶT
 	        PhieuDatBan phieuDat = new PhieuDatBan();
 	        phieuDat.setMaPhieuDat(txtMaPhieuDat.getText());
 	        phieuDat.setKhachHang(kh);
-	        
-	        phieuDat.setNhanVien(nhanVienDangNhap); // ✅ SỬ DỤNG NHÂN VIÊN TỪ SESSION
-	        phieuDat.setBanAn(ban);
+	        phieuDat.setNhanVien(nhanVienDangNhap);
 	        phieuDat.setNgayDat(ngayGioDat);
+	        phieuDat.setKhungGio(khungGio); // 🔥 THÊM: Lưu khung giờ
 	        phieuDat.setSoNguoi(soNguoi);
 	        phieuDat.setSoTienCoc(soTienCoc);
 	        phieuDat.setGhiChu(ghiChu);
-	        phieuDat.setTrangThai("Đã đặt");
+	        phieuDat.setTrangThai("Chờ xác nhận"); // Trạng thái mới tạo
 
-	        // Lưu vào database
-	        boolean success = phieuDatDAO.taoPhieuDat(phieuDat);
+	        // 10. LƯU VÀO DATABASE (TRANSACTION)
+	        boolean taoPhieuThanhCong = phieuDatDAO.taoPhieuDat(phieuDat);
 
-	        if (success) {
-	        	boolean capNhatBan= banAnDAO.capNhatTrangThaiBan(maBan, "Đã đặt");
-	        	if(!capNhatBan) {
-	        		System.err.println("Không thể cập nhật trạng thái bàn");
-	        	}
-	            JOptionPane.showMessageDialog(this,
-	                "Đặt bàn thành công!\n\n" +
-	                "Mã phiếu đặt: " + txtMaPhieuDat.getText() + "\n" +
-	                "Bàn: " + tenBan + "\n\n" +
-	                "Vui lòng đến đúng giờ!",
-	                "Thành công", JOptionPane.INFORMATION_MESSAGE);
-	            loadDanhSachBanTrong();
-	            lamMoiForm();
+	        if (taoPhieuThanhCong) {
+	            boolean luuChiTietThanhCong = true;
+	            
+	            // 🔥 Lưu danh sách bàn vào ChiTietDatBan
+	            for (String maBan : danhSachBanDaChon) {
+	                boolean themBan = phieuDatDAO.themBanVaoPhieuDat(
+	                    txtMaPhieuDat.getText(), 
+	                    maBan, 
+	                    ""
+	                );
+	                
+	                if (!themBan) {
+	                    luuChiTietThanhCong = false;
+	                    break;
+	                }
+	            }
+	            
+	            if (luuChiTietThanhCong) {
+	                // 🔥 CẬP NHẬT TRẠNG THÁI BÀN SANG "ĐÃ ĐẶT"
+	                for (String maBan : danhSachBanDaChon) {
+	                    banAnDAO.capNhatTrangThaiBan(maBan, "Đã đặt");
+	                }
+	                
+	                JOptionPane.showMessageDialog(this,
+	                    "Đặt bàn thành công!\n" +
+	                    "Mã phiếu: " + txtMaPhieuDat.getText() + "\n" +
+	                    "Vui lòng nhắc khách đến đúng giờ.",
+	                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+	                
+	                loadDanhSachBanTrong(); 
+	                lamMoiForm();
+	            } else {
+	                JOptionPane.showMessageDialog(this,
+	                    "Đã tạo phiếu nhưng có lỗi khi lưu danh sách bàn!",
+	                    "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+	            }
 	        } else {
 	            JOptionPane.showMessageDialog(this,
-	                "Đặt bàn thất bại!",
-	                "Lỗi", JOptionPane.ERROR_MESSAGE);
+	                "Lỗi: Không thể tạo phiếu đặt bàn!",
+	                "Thất bại", JOptionPane.ERROR_MESSAGE);
 	        }
 
 	    } catch (Exception e) {
 	        e.printStackTrace();
 	        JOptionPane.showMessageDialog(this,
-	            "Lỗi khi đặt bàn!\n" + e.getMessage(),
-	            "Lỗi", JOptionPane.ERROR_MESSAGE);
+	            "Lỗi hệ thống khi đặt bàn:\n" + e.getMessage(),
+	            "Lỗi ngoại lệ", JOptionPane.ERROR_MESSAGE);
 	    }
 	}
 
+
+	private int laySoChoTheoMaBan(String maBan) {
+	    for (int i = 0; i < tableModel.getRowCount(); i++) {
+	        if (tableModel.getValueAt(i, 0).toString().equals(maBan)) {
+	            return Integer.parseInt(tableModel.getValueAt(i, 2).toString());
+	        }
+	    }
+	    return 0;
+	}
 
 
 
@@ -887,14 +1042,74 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
 	    maKhachHang = null;
 	    
 	    txtSDTKhachHang.requestFocus();
+	    
+	 // Xóa danh sách bàn đã chọn
+	    danhSachBanDaChon.clear();
+	    txtDanhSachBanDaChon.setText("Chưa chọn bàn nào");
 	}
 
 
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
+	    if (e.getSource() == tableBanTrong && e.getClickCount() == 1) {
+	        int row = tableBanTrong.getSelectedRow();
+	        if (row != -1) {
+	            String maBan = tableModel.getValueAt(row, 0).toString();
+	            String tenBan = tableModel.getValueAt(row, 1).toString();
+	            
+	            // Kiểm tra xem bàn đã được chọn chưa
+	            if (danhSachBanDaChon.contains(maBan)) {
+	                // Nếu đã chọn -> Bỏ chọn
+	                danhSachBanDaChon.remove(maBan);
+	                JOptionPane.showMessageDialog(this, 
+	                    "Đã bỏ chọn: " + tenBan,
+	                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+	            } else {
+	                // Nếu chưa chọn -> Thêm vào danh sách
+	                danhSachBanDaChon.add(maBan);
+	                JOptionPane.showMessageDialog(this, 
+	                    "Đã thêm: " + tenBan,
+	                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+	            }
+	            
+	            // Cập nhật hiển thị
+	            capNhatHienThiBanDaChon();
+	        }
+	    }
+	}
+	
+	private void capNhatHienThiBanDaChon() {
+	    if (danhSachBanDaChon.isEmpty()) {
+	        txtDanhSachBanDaChon.setText("Chưa chọn bàn nào");
+	        return;
+	    }
+	    
+	    StringBuilder sb = new StringBuilder();
+	    for (int i = 0; i < danhSachBanDaChon.size(); i++) {
+	        String maBan = danhSachBanDaChon.get(i);
+	        
+	        // Tìm tên bàn từ bảng
+	        String tenBan = timTenBanTheoMa(maBan);
+	        
+	        sb.append((i + 1)).append(". ").append(tenBan)
+	          .append(" (").append(maBan).append(")");
+	        
+	        if (i < danhSachBanDaChon.size() - 1) {
+	            sb.append("\n");
+	        }
+	    }
+	    
+	    txtDanhSachBanDaChon.setText(sb.toString());
+	}
+
+	private String timTenBanTheoMa(String maBan) {
+	    for (int i = 0; i < tableModel.getRowCount(); i++) {
+	        if (tableModel.getValueAt(i, 0).toString().equals(maBan)) {
+	            return tableModel.getValueAt(i, 1).toString();
+	        }
+	    }
+	    return maBan;
 	}
 
 	@Override
@@ -919,6 +1134,15 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
 	public void mouseExited(MouseEvent e) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	
+	// Xác định khung giờ dựa trên giờ trong ngày
+	private int xacDinhKhungGio(int gio) {
+	    if (gio >= 6 && gio < 11) return KHUNG_SANG;
+	    if (gio >= 11 && gio < 14) return KHUNG_TRUA;
+	    if (gio >= 14 && gio < 17) return KHUNG_CHIEU;
+	    return KHUNG_TOI; // 17:00 - 22:00
 	}
     
         
