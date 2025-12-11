@@ -17,12 +17,13 @@ public class CaLamViecDAO {
 		ConnectDB.getInstance().connect();
 		PreparedStatement stmt = null;
 		try {
-			String sql = "INSERT INTO CaLamViec(maCa, gioVaoLam, gioTanLam, trangThai) VALUES (?, ?, ?, ?)";
+			String sql = "INSERT INTO CaLamViec(maCa, tenCa, gioVaoLam, gioTanLam, trangThai) VALUES (?, ?, ?, ?, ?)";
 			stmt = con.prepareStatement(sql);
 			stmt.setString(1, ca.getMaCa());
-			stmt.setTime(2, Time.valueOf(ca.getGioVaoLam()));
-			stmt.setTime(3, Time.valueOf(ca.getGioTanLam()));
-			stmt.setBoolean(4, ca.isTrangThai());
+			stmt.setString(2, ca.getTenCa());
+			stmt.setTime(3, Time.valueOf(ca.getGioVaoLam()));
+			stmt.setTime(4, Time.valueOf(ca.getGioTanLam()));
+			stmt.setBoolean(5, ca.isTrangThai());
 			return stmt.executeUpdate() > 0;
 
 		} catch (
@@ -54,12 +55,13 @@ public class CaLamViecDAO {
 		ConnectDB.getInstance().connect();
 		PreparedStatement stmt;
 		try {
-			String sql = "UPDATE CaLamViec SET gioVaoLam=?, gioTanLam=?, trangThai=? WHERE maCa=?";
+			String sql = "UPDATE CaLamViec SET gioVaoLam = ?, gioTanLam=?, trangThai=?, tenCa = ? WHERE maCa=?";
 			stmt = con.prepareStatement(sql);
 			stmt.setTime(1, Time.valueOf(ca.getGioVaoLam()));
 			stmt.setTime(2, Time.valueOf(ca.getGioTanLam()));
 			stmt.setBoolean(3, ca.isTrangThai());
-			stmt.setString(4, ca.getMaCa());
+			stmt.setString(4, ca.getTenCa());
+			stmt.setString(5, ca.getMaCa());
 
 			return stmt.executeUpdate() > 0;
 		} catch (Exception e) {
@@ -74,7 +76,7 @@ public class CaLamViecDAO {
 		ConnectDB.getInstance().connect();
 		Statement stmt = null;
 		try {
-			String sql = "SELECT * FROM CaLamViec where trangThai = 1";
+			String sql = "SELECT * FROM CaLamViec";
 			stmt = con.createStatement();
 			ResultSet rs = stmt.executeQuery(sql);
 			while (rs.next()) {
@@ -138,11 +140,11 @@ public class CaLamViecDAO {
 		return maMoi;
 	}
 
-	public ArrayList<CaLamViec> timCaLamViecTheoTen(String tenCa) {
-		ArrayList<CaLamViec> dsCaLam = new ArrayList<CaLamViec>();
+	public List<CaLamViec> timCaLamViecTheoTen(String tenCa) {
 		Connection con = ConnectDB.getConnection();
 		ConnectDB.getInstance().connect();
 		PreparedStatement stmt = null;
+		ArrayList<CaLamViec> dsCaLam = new ArrayList<CaLamViec>();
 		try {
 			String sql = "SELECT * FROM CaLamViec WHERE tenCa like ?";
 			stmt = con.prepareStatement(sql);
@@ -171,5 +173,6 @@ public class CaLamViecDAO {
 		}
 		return dsCaLam;
 	}
-
+	
+	
 }

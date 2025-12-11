@@ -130,15 +130,17 @@ public class DialogChiTietBanAn extends JDialog {
             JButton btnDatBan = createButton("Đặt bàn", MAIN_COLOR);
             btnDatBan.addActionListener(e -> {
                 dispose();
-                JFrame frameDatBan = new JFrame("Đặt bàn - " + banAn.getTenBan());
-                frameDatBan.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frameDatBan.setSize(1000, 700);
-                frameDatBan.setLocationRelativeTo(parent);
-                frameDatBan.setContentPane(new DatBan());
-                frameDatBan.setVisible(true);
+//                JFrame frameDatBan = new JFrame("Đặt bàn - " + banAn.getTenBan());
+//                frameDatBan.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//                frameDatBan.setSize(1000, 700);
+//                frameDatBan.setLocationRelativeTo(parent);
+//                frameDatBan.setContentPane(new DatBan());
+//                frameDatBan.setVisible(true);
+                 new DialogDatBan(parent, banAn).setVisible(true);
             });
             buttonPanel.add(btnDatBan, 0);
         }
+
         else if ("Đang sử dụng".equals(trangThai)) {
             JButton btnXemHoaDon = createButton("Xem hóa đơn", MAIN_COLOR);
             btnXemHoaDon.addActionListener(e -> {
@@ -150,18 +152,19 @@ public class DialogChiTietBanAn extends JDialog {
             if (chuyenBanCallback != null) {
                 JButton btnChuyenBan = createButton("Chuyển bàn từ đây", new Color(231, 76, 60));
                 btnChuyenBan.addActionListener(e -> {
-                    chuyenBanCallback.onBanSelected(banAn);
+                    chuyenBanCallback.onBanSelected(banAn, null, true); //chọn được bàn
                     dispose();
                 });
                 buttonPanel.add(btnChuyenBan, 1);
 
                 JButton btnGopBan = createButton("Gộp bàn vào đây", new Color(46, 125, 50));
                 btnGopBan.addActionListener(e -> {
-                    chuyenBanCallback.onBanSelected(banAn);
+                    chuyenBanCallback.onBanSelected(banAn, null, true); //
                     dispose();
                 });
                 buttonPanel.add(btnGopBan, 2);
             }
+        
         }
         // ============================================
         // 🔥 XỬ LÝ BÀN ĐÃ ĐẶT (Có phiếu đặt)
@@ -217,6 +220,7 @@ public class DialogChiTietBanAn extends JDialog {
             });
             buttonPanel.add(btnXemPhieuDat, 0);
         }
+        
         // ============================================
         // 🔥 XỬ LÝ TRẠNG THÁI KHÁC
         // ============================================

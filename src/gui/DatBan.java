@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import javax.swing.*;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DatBan extends JPanel implements ActionListener, MouseListener{
 
@@ -326,6 +328,38 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
+        
+     // ✅ Tự động load bàn khi thay đổi ngày
+        dateChooserNgayDat.addPropertyChangeListener("date", evt -> {
+            if (dateChooserNgayDat.getDate() != null) {
+                loadDanhSachBanTrong();
+            }
+        });
+
+        // ✅ Tự động load bàn khi thay đổi giờ
+        spinnerGioDat.addChangeListener(e -> {
+            if (dateChooserNgayDat.getDate() != null) {
+                loadDanhSachBanTrong();
+            }
+        });
+
+        // ✅ Tự động load bàn khi thay đổi khu vực
+        cboKhuVuc.addActionListener(e -> {
+            if (dateChooserNgayDat.getDate() != null && 
+                cboKhuVuc.getSelectedIndex() > 0) {
+                loadDanhSachBanTrong();
+            }
+        });
+
+        // ✅ Tự động load bàn khi thay đổi loại bàn
+        cboLoaiBan.addActionListener(e -> {
+            if (dateChooserNgayDat.getDate() != null && 
+                cboLoaiBan.getSelectedIndex() > 0) {
+                loadDanhSachBanTrong();
+            }
+        });
+
+        
         return mainPanel;
     }
     
@@ -449,9 +483,7 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
     private void loadDanhSachBanTrong() {
         try {
             tableModel.setRowCount(0);
-            danhSachBanDaChon.clear();
-            txtDanhSachBanDaChon.setText("Chưa chọn bàn nào");
-
+            
             Date ngayDat = dateChooserNgayDat.getDate();
             Date gioDat = (Date) spinnerGioDat.getValue();
 
@@ -473,19 +505,35 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
 
                 int khungGio = xacDinhKhungGio(ngayGioDat.getHour());
 
-                // Sử dụng hàm lấy bàn trống theo khung giờ
+                // ✅ Lọc theo khu vực và loại bàn nếu đã chọn
+                String khuVucChon = cboKhuVuc.getSelectedItem().toString();
+                String loaiBanChon = cboLoaiBan.getSelectedItem().toString();
+
                 dsBanTrong = banAnDAO.getDSBanTrongTheoKhungGio(
                     ngayGioDat.toLocalDate(), khungGio
                 );
+                
+                // Lọc thêm theo tiêu chí
+                if (!khuVucChon.equals("-- Tất cả --")) {
+                    dsBanTrong = dsBanTrong.stream()
+                        .filter(ban -> ban.getKhuVuc() != null && 
+                                       ban.getKhuVuc().getTenKhuVuc().contains(khuVucChon))
+                        .collect(Collectors.toList());
+                }
+                
+                if (!loaiBanChon.equals("-- Tất cả --")) {
+                    dsBanTrong = dsBanTrong.stream()
+                        .filter(ban -> ban.getLoaiBan().getTenLoaiBan().contains(loaiBanChon))
+                        .collect(Collectors.toList());
+                }
             } else {
-                // Nếu chưa chọn ngày giờ, hiển thị tất cả bàn trống hiện tại
                 dsBanTrong = banAnDAO.getDSBanTrong();
             }
 
             if (dsBanTrong == null || dsBanTrong.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
                     "Không có bàn trống trong khung giờ này!",
-                    "Thông báo", JOptionPane.WARNING_MESSAGE);
+                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
 
@@ -1143,6 +1191,77 @@ public class DatBan extends JPanel implements ActionListener, MouseListener{
 	    if (gio >= 11 && gio < 14) return KHUNG_TRUA;
 	    if (gio >= 14 && gio < 17) return KHUNG_CHIEU;
 	    return KHUNG_TOI; // 17:00 - 22:00
+	}
+
+
+
+	public void tuDongDienThongTin(String maBanChon, LocalDate ngayDat, int khungGio) {
+	    try {
+	        // 1. Set ngày đặt
+	        Calendar cal = Calendar.getInstance();
+	        cal.set(ngayDat.getYear(), ngayDat.getMonthValue() - 1, ngayDat.getDayOfMonth());
+	        dateChooserNgayDat.setDate(cal.getTime());
+	        
+	        // 2. Set giờ đặt theo khung giờ
+	        Calendar calGio = Calendar.getInstance();
+	        switch (khungGio) {
+	            case KHUNG_SANG: // 6-11h -> đặt 8h
+	                calGio.set(Calendar.HOUR_OF_DAY, 8);
+	                break;
+	            case KHUNG_TRUA: // 11-14h -> đặt 11h30
+	                calGio.set(Calendar.HOUR_OF_DAY, 11);
+	                calGio.set(Calendar.MINUTE, 30);
+	                break;
+	            case KHUNG_CHIEU: // 14-17h -> đặt 14h
+	                calGio.set(Calendar.HOUR_OF_DAY, 14);
+	                break;
+	            case KHUNG_TOI: // 17-22h -> đặt 18h
+	                calGio.set(Calendar.HOUR_OF_DAY, 18);
+	                break;
+	        }
+	        calGio.set(Calendar.SECOND, 0);
+	        spinnerGioDat.setValue(calGio.getTime());
+	        
+	        // 3. Load danh sách bàn trống theo khung giờ
+	        loadDanhSachBanTrong();
+	        
+	        // 4. Tự động chọn bàn trong bảng
+	        for (int i = 0; i < tableModel.getRowCount(); i++) {
+	            String maBan = tableModel.getValueAt(i, 0).toString();
+	            if (maBan.equals(maBanChon)) {
+	                tableBanTrong.setRowSelectionInterval(i, i);
+	                tableBanTrong.scrollRectToVisible(
+	                    tableBanTrong.getCellRect(i, 0, true)
+	                );
+	                
+	                // 5. Tự động thêm vào danh sách đã chọn
+	                String tenBan = tableModel.getValueAt(i, 1).toString();
+	                danhSachBanDaChon.add(maBanChon);
+	                capNhatHienThiBanDaChon();
+	                
+	                // 6. Tự động điền số người dựa vào số chỗ
+	                int soCho = Integer.parseInt(tableModel.getValueAt(i, 2).toString());
+	                txtSoNguoi.setText(String.valueOf(soCho));
+	                
+	                // Thông báo
+	                JOptionPane.showMessageDialog(this,
+	                    "Đã tự động chọn: " + tenBan + "\n" +
+	                    "Ngày: " + new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(calGio.getTime()) + "\n" +
+	                    "Vui lòng nhập SĐT khách hàng để tiếp tục!",
+	                    "Thông tin đặt bàn", JOptionPane.INFORMATION_MESSAGE);
+	                
+	                // Focus vào ô SĐT
+	                txtSDTKhachHang.requestFocus();
+	                break;
+	            }
+	        }
+	        
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        JOptionPane.showMessageDialog(this,
+	            "Lỗi khi tự động điền thông tin: " + e.getMessage(),
+	            "Lỗi", JOptionPane.ERROR_MESSAGE);
+	    }
 	}
     
         

@@ -50,19 +50,21 @@ CREATE TABLE CaLamViec (
 );
 GO
 
--- Bảng LichLamViec
-CREATE TABLE LichLamViec (
-    maLich VARCHAR(10) PRIMARY KEY,
-    ngayLamViec DATE,
-    maNV VARCHAR(10),
-    maCa VARCHAR(10),
-    trangThai BIT,
+
+
+CREATE TABLE LichLamViec (  -- khoá chính tự tăng
+    maNV VARCHAR(10) NOT NULL,  
+    maCa VARCHAR(10) NOT NULL,     
+    ngayLamViec DATE NOT NULL, 
+    trangThai BIT DEFAULT 1,
+    
+	Primary key(maCa, ngayLamViec, maNV),
     FOREIGN KEY (maNV) REFERENCES NhanVien(maNV) ON DELETE CASCADE,
     FOREIGN KEY (maCa) REFERENCES CaLamViec(maCa) ON DELETE CASCADE
 );
-GO
 
 
+select * from ChiTietDatBan
 
 -- Bảng KhachHang (đã bỏ cột email)
 CREATE TABLE KhachHang (

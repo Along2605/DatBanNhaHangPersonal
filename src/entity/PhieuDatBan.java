@@ -1,8 +1,3 @@
-/*
- * @ (#) PhieuDatBan.java   1.0   9/18/2025
- *
- * Copyright (c) 2025 IUH. All rights reserved.
- */
 package entity;
 
 import java.time.LocalDateTime;
@@ -17,7 +12,7 @@ public class PhieuDatBan {
     private int soNguoi;
     private double soTienCoc;
     private String ghiChu;
-    private String trangThai; // Da den, Chua den, Huy
+    private String trangThai;
 
     public PhieuDatBan() {
     }

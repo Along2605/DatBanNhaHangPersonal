@@ -304,7 +304,11 @@ public class BanAnDAO {
 		Connection con = ConnectDB.getConnection();
 		PreparedStatement ps = null;
 		try {
-			String sql = "SELECT TOP 1 maHoaDon FROM HoaDon WHERE maBan = ? AND trangThai = N'Chưa thanh toán'";
+			// 🔥 SỬA: Chỉ lấy hóa đơn của NGÀY HÔM NAY
+			String sql = "SELECT TOP 1 maHoaDon FROM HoaDon " +
+			             "WHERE maBan = ? " +
+			             "AND trangThai = N'Chưa thanh toán' " +
+			             "AND CAST(ngayLapHoaDon AS DATE) = CAST(GETDATE() AS DATE)";
 			ps = con.prepareStatement(sql);
 			ps.setString(1, maBan);
 			ResultSet rs = ps.executeQuery();
@@ -382,15 +386,8 @@ public class BanAnDAO {
 	            FROM ChiTietDatBan ctdb
 	            JOIN PhieuDatBan pdb ON ctdb.maPhieuDat = pdb.maPhieuDat
 	            WHERE CAST(pdb.ngayDat AS DATE) = ?
-	            AND pdb.trangThai NOT IN (N'Đã hủy', N'Đã hoàn thành')
-	            AND ? = (
-	                CASE 
-	                    WHEN DATEPART(HOUR, pdb.ngayDat) >= 6 AND DATEPART(HOUR, pdb.ngayDat) < 11 THEN 1
-	                    WHEN DATEPART(HOUR, pdb.ngayDat) >= 11 AND DATEPART(HOUR, pdb.ngayDat) < 14 THEN 2
-	                    WHEN DATEPART(HOUR, pdb.ngayDat) >= 14 AND DATEPART(HOUR, pdb.ngayDat) < 17 THEN 3
-	                    ELSE 4
-	                END
-	            )
+	            AND pdb.khungGio = ?
+	            AND pdb.trangThai IN (N'Chờ xác nhận', N'Đã xác nhận')
 	        )
 	        ORDER BY b.maBan
 	    """;
@@ -452,7 +449,8 @@ public class BanAnDAO {
 	                -- 1. Bàn bảo trì → Luôn hiển thị "Bảo trì"
 	                WHEN b.trangThai = N'Bảo trì' THEN N'Bảo trì'
 	                
-	                -- 2. Bàn đang sử dụng (có hóa đơn chưa thanh toán) → "Đang sử dụng"
+	                -- 2. Bàn đang sử dụng (có hóa đơn chưa thanh toán hôm nay)
+	                -- Case 2a: Hóa đơn vãng lai (maBan trực tiếp)
 	                WHEN EXISTS (
 	                    SELECT 1 
 	                    FROM HoaDon hd
@@ -461,18 +459,40 @@ public class BanAnDAO {
 	                    AND CAST(hd.ngayLapHoaDon AS DATE) = CAST(GETDATE() AS DATE)
 	                ) THEN N'Đang sử dụng'
 	                
-	                -- 3. Bàn có phiếu đặt hợp lệ trong khung giờ này → "Đã đặt"
+	                -- Case 2b: Hóa đơn từ phiếu đặt (qua ChiTietDatBan)
+	                WHEN EXISTS (
+	                    SELECT 1
+	                    FROM HoaDon hd
+	                    INNER JOIN PhieuDatBan pdb ON hd.maPhieuDat = pdb.maPhieuDat
+	                    INNER JOIN ChiTietDatBan ctdb ON pdb.maPhieuDat = ctdb.maPhieuDat
+	                    WHERE ctdb.maBan = b.maBan
+	                    AND hd.trangThai = N'Chưa thanh toán'
+	                    AND CAST(hd.ngayLapHoaDon AS DATE) = CAST(GETDATE() AS DATE)
+	                ) THEN N'Đang sử dụng'
+	                
+	                -- 3. Bàn có phiếu đặt ĐÃ XÁC NHẬN trong khung giờ này → "Đang sử dụng"
 	                WHEN EXISTS (
 	                    SELECT 1 
 	                    FROM ChiTietDatBan ctdb
 	                    JOIN PhieuDatBan pdb ON ctdb.maPhieuDat = pdb.maPhieuDat
 	                    WHERE ctdb.maBan = b.maBan 
-	                    AND pdb.trangThai IN (N'Chờ xác nhận', N'Đã xác nhận')
+	                    AND pdb.trangThai = N'Đã xác nhận'
+	                    AND CAST(pdb.ngayDat AS DATE) = ?
+	                    AND pdb.khungGio = ?
+	                ) THEN N'Đang sử dụng'
+	                
+	                -- 4. Bàn có phiếu đặt CHỜ XÁC NHẬN trong khung giờ này → "Đã đặt"
+	                WHEN EXISTS (
+	                    SELECT 1 
+	                    FROM ChiTietDatBan ctdb
+	                    JOIN PhieuDatBan pdb ON ctdb.maPhieuDat = pdb.maPhieuDat
+	                    WHERE ctdb.maBan = b.maBan 
+	                    AND pdb.trangThai = N'Chờ xác nhận'
 	                    AND CAST(pdb.ngayDat AS DATE) = ?
 	                    AND pdb.khungGio = ?
 	                ) THEN N'Đã đặt'
 	                
-	                -- 4. Các trường hợp còn lại → "Trống"
+	                -- 5. Các trường hợp còn lại → "Trống"
 	                ELSE N'Trống'
 	            END AS trangThaiHienThi
 
@@ -484,8 +504,12 @@ public class BanAnDAO {
 
 	    Connection con = ConnectDB.getConnection();
 	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        // Tham số 1,2: Cho phiếu "Đã xác nhận" → "Đang sử dụng"
 	        stmt.setDate(1, java.sql.Date.valueOf(ngayXem));
 	        stmt.setInt(2, khungGio);
+	        // Tham số 3,4: Cho phiếu "Chờ xác nhận" → "Đã đặt"
+	        stmt.setDate(3, java.sql.Date.valueOf(ngayXem));
+	        stmt.setInt(4, khungGio);
 	        
 	        ResultSet rs = stmt.executeQuery();
 	        while (rs.next()) {
@@ -602,15 +626,8 @@ public class BanAnDAO {
 	        JOIN PhieuDatBan pdb ON ctdb.maPhieuDat = pdb.maPhieuDat
 	        WHERE ctdb.maBan = ?
 	          AND CAST(pdb.ngayDat AS DATE) = ?
-	          AND pdb.trangThai NOT IN (N'Đã hủy', N'Đã hoàn thành')
-	          AND ? = (
-	              CASE 
-	                  WHEN DATEPART(HOUR, pdb.ngayDat) >= 6 AND DATEPART(HOUR, pdb.ngayDat) < 11 THEN 1
-	                  WHEN DATEPART(HOUR, pdb.ngayDat) >= 11 AND DATEPART(HOUR, pdb.ngayDat) < 14 THEN 2
-	                  WHEN DATEPART(HOUR, pdb.ngayDat) >= 14 AND DATEPART(HOUR, pdb.ngayDat) < 17 THEN 3
-	                  ELSE 4
-	              END
-	          )
+	          AND pdb.khungGio = ?
+	          AND pdb.trangThai IN (N'Chờ xác nhận', N'Đã xác nhận')
 	    """;
 
 	    try (Connection con = ConnectDB.getConnection();

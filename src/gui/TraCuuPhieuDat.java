@@ -132,9 +132,9 @@ public class TraCuuPhieuDat extends JPanel implements ActionListener, MouseListe
         // Tên khách hàng
         addFormField(formPanel, gbc, row++, "Tên khách hàng:", txtTenKhachHang = createTextField());
         
-        // Trạng thái
+        // Trạng thái (3 trạng thái chuẩn của phiếu đặt)
         cboTrangThai = createComboBox(new String[]{
-            "-- Tất cả --", "Chờ xác nhận", "Đã xác nhận", "Đã hủy", "Khách không đến"
+            "-- Tất cả --", "Chờ xác nhận", "Đã xác nhận", "Đã hủy"
         });
         addFormField(formPanel, gbc, row++, "Trạng thái:", cboTrangThai);
         

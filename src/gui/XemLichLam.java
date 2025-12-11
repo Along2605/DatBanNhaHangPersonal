@@ -12,6 +12,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
 import connectDB.ConnectDB;
 import dao.CaLamViecDAO;
@@ -20,7 +21,7 @@ import entity.CaLamViec;
 import entity.LichLamViec;
 import entity.NhanVien;
 
-public class XemLichLam extends JPanel{
+public class XemLichLam extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 	private DefaultTableModel modelLich;
@@ -50,7 +51,7 @@ public class XemLichLam extends JPanel{
 		lblTitle.setForeground(Color.decode("#333333"));
 		add(lblTitle, BorderLayout.NORTH);
 
-		//Lịch làm
+		// Lịch làm
 		String[] col = new String[8];
 		col[0] = "Ca làm";
 		DateTimeFormatter format = DateTimeFormatter.ofPattern("EEE, dd/MM", new Locale("vi", "VN"));
@@ -65,99 +66,108 @@ public class XemLichLam extends JPanel{
 		tableLich.setColumnSelectionAllowed(true);
 		tableLich.setCellSelectionEnabled(true);
 		tableLich.setFillsViewportHeight(true);
+		// Đổi màu tiêu đề
+		JTableHeader header = tableLich.getTableHeader();
+		header.setBackground(Color.decode("#4CAF50"));
+		header.setForeground(Color.WHITE);
+		header.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
-		//đổi màu theo trạng thái
+		tableLich.setSelectionBackground(new Color(51, 153, 255));
+		tableLich.setSelectionForeground(Color.WHITE);
+		
+		
+		// đổi màu theo trạng thái
 		tableLich.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-		    private static final long serialVersionUID = 1L;
+			private static final long serialVersionUID = 1L;
 
-		    @Override
-		    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-		                                                   boolean hasFocus, int row, int column) {
-		        // Dùng JTextArea để tự động xuống dòng nếu nội dung dài
-		        JTextArea textArea = new JTextArea();
-		        textArea.setLineWrap(true);
-		        textArea.setWrapStyleWord(true);
-		        textArea.setEditable(false); // Không cho chỉnh sửa
-		        textArea.setOpaque(true);
-		        textArea.setFont(table.getFont());
-		        textArea.setText(value == null ? "" : value.toString());
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+					boolean hasFocus, int row, int column) {
+				// Dùng JTextArea để tự động xuống dòng nếu nội dung dài
+				JTextArea textArea = new JTextArea();
+				textArea.setLineWrap(true);
+				textArea.setWrapStyleWord(true);
+				textArea.setEditable(false); // Không cho chỉnh sửa
+				textArea.setOpaque(true);
+				textArea.setFont(table.getFont());
+				textArea.setText(value == null ? "" : value.toString());
 
-		        // Màu mặc định
-		        Color bgColor = Color.WHITE;
-		        Color fgColor = Color.BLACK;
+				// Màu mặc định
+				Color bgColor = Color.WHITE;
+				Color fgColor = Color.BLACK;
 
-		        if (column > 0 && !textArea.getText().isEmpty()) {
-		            String tenCa = table.getValueAt(row, 0).toString(); 
-		            LocalDate ngay = LocalDate.now().plusDays(column - 1);
+				if (column > 0 && !textArea.getText().isEmpty()) {
+					String tenCa = table.getValueAt(row, 0).toString();
+					LocalDate ngay = LocalDate.now().plusDays(column - 1);
 
-		            // Tìm mã ca
-		            ArrayList<CaLamViec> ca = caLamDAO.timCaLamViecTheoTen(tenCa);
-		            if (ca != null && !ca.isEmpty()) {
-		                String maCa = ca.get(0).getMaCa();
-		                List<LichLamViec> dsLich = lichLamDAO.layLichLamViecTheoCaVaNgay(maCa, ngay);
+					// Tìm mã ca
+					List<CaLamViec> ca = caLamDAO.timCaLamViecTheoTen(tenCa);
+					if (ca != null && !ca.isEmpty()) {
+						String maCa = ca.get(0).getMaCa();
+						List<LichLamViec> dsLich = lichLamDAO.layLichLamViecTheoCaVaNgay(maCa, ngay);
 
-		                // Nếu có lịch làm thì đổi màu theo trạng thái
-		                if (dsLich != null && !dsLich.isEmpty()) {
-		                    boolean coNghi = dsLich.stream().anyMatch(lich -> !lich.isTrangThai());
-		                    bgColor = coNghi ? new Color(255, 204, 204) : new Color(204, 255, 204); 
-		                    // đỏ nhạt = nghỉ, xanh nhạt = làm
-		                }
-		            }
-		        }
+						// Nếu có lịch làm thì đổi màu theo trạng thái
+						if (dsLich != null && !dsLich.isEmpty()) {
+							boolean coNghi = dsLich.stream().anyMatch(lich -> !lich.isTrangThai());
+							bgColor = coNghi ? new Color(255, 204, 204) : new Color(204, 255, 204);
+							// đỏ nhạt = nghỉ, xanh nhạt = làm
+						}
+					}
+				}
 
-		        // Áp dụng màu
-		        textArea.setBackground(bgColor);
-		        textArea.setForeground(fgColor);
+				// Áp dụng màu
+				textArea.setBackground(bgColor);
+				textArea.setForeground(fgColor);
 
-		        // Căn giữa nội dung
-		        textArea.setAlignmentX(JTextArea.CENTER_ALIGNMENT);
-		        textArea.setAlignmentY(JTextArea.CENTER_ALIGNMENT);
+				// Căn giữa nội dung
+				textArea.setAlignmentX(JTextArea.CENTER_ALIGNMENT);
+				textArea.setAlignmentY(JTextArea.CENTER_ALIGNMENT);
 
-		        // Tự điều chỉnh chiều cao dòng
-		        int height = textArea.getPreferredSize().height + 8;
-		        if (table.getRowHeight(row) < height) {
-		            table.setRowHeight(row, height);
-		        }
+				// Tự điều chỉnh chiều cao dòng
+				int height = textArea.getPreferredSize().height + 8;
+				if (table.getRowHeight(row) < height) {
+					table.setRowHeight(row, height);
+				}
 
-		        return textArea;
-		    }
+				return textArea;
+			}
 		});
 
-
-		//load lịch làm
+		// load lịch làm
 		loadLichLamTheoTuan();
 
 		JScrollPane scrollLich = new JScrollPane(tableLich);
 		scrollLich.setBorder(BorderFactory.createEmptyBorder());
 		scrollLich.getViewport().setBackground(Color.WHITE);
 		add(scrollLich, BorderLayout.CENTER);
-		
+
 		// Tự động giãn cột để full chiều ngang panel
 		tableLich.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		// Cho phép bảng lấp đầy vùng hiển thị
 		tableLich.setFillsViewportHeight(true);
-		
+
 		SwingUtilities.invokeLater(() -> {
-		    // Tính chiều rộng tổng trừ cột đầu tiên
-		    int totalWidth = scrollLich.getViewport().getWidth();
-		    if (totalWidth == 1) totalWidth = getWidth();
+			// Tính chiều rộng tổng trừ cột đầu tiên
+			int totalWidth = scrollLich.getViewport().getWidth();
+			if (totalWidth == 1)
+				totalWidth = getWidth();
 
-		    // Cột đầu tiên chiếm 
-		    int firstColWidth = (int) (totalWidth * 0.05);
-		    tableLich.getColumnModel().getColumn(0).setPreferredWidth(firstColWidth);
+			// Cột đầu tiên chiếm
+			int firstColWidth = (int) (totalWidth * 0.05);
+			tableLich.getColumnModel().getColumn(0).setPreferredWidth(firstColWidth);
 
-		    // Các cột còn lại chia đều 80%
-		    int otherWidth = (int) ((totalWidth * 0.95) / 7);
-		    for (int i = 0; i < tableLich.getColumnCount(); i++) {
-		        tableLich.getColumnModel().getColumn(i).setPreferredWidth(otherWidth);
-		    }
+			// Các cột còn lại chia đều 80%
+			int otherWidth = (int) ((totalWidth * 0.95) / 7);
+			for (int i = 0; i < tableLich.getColumnCount(); i++) {
+				tableLich.getColumnModel().getColumn(i).setPreferredWidth(otherWidth);
+			}
 		});
 
-		//Note trạng thái
+		// Note trạng thái
 		JPanel pnNote = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
 		add(pnNote, BorderLayout.SOUTH);
 		pnNote.setOpaque(false);
-		
+
 		JPanel pnLam = new JPanel();
 		pnNote.add(pnLam);
 		pnLam.setBackground(new Color(204, 255, 204));
@@ -175,11 +185,11 @@ public class XemLichLam extends JPanel{
 	private void loadLichLamTheoTuan() {
 		DefaultTableModel model = (DefaultTableModel) tableLich.getModel();
 		model.setRowCount(0);
-		//Ca làm
+		// Ca làm
 		List<CaLamViec> dsCa = caLamDAO.layDanhSachCaLamViec();
 		LocalDate ngayBatDauTuan = LocalDate.now();
 
-		//Chỉ hiển thị 7 ngày trong tuần
+		// Chỉ hiển thị 7 ngày trong tuần
 		DateTimeFormatter format = DateTimeFormatter.ofPattern("EEE, dd/MM", new Locale("vi", "VN"));
 		String[] colNames = new String[8];
 		colNames[0] = "Ca làm";
@@ -197,10 +207,10 @@ public class XemLichLam extends JPanel{
 				List<LichLamViec> dsLich = lichLamDAO.layLichLamViecTheoCaVaNgay(ca.getMaCa(), ngay);
 
 				if (dsLich.isEmpty()) {
-					row.add(""); // Nếu không có nhân viên làm 
+					row.add(""); // Nếu không có nhân viên làm
 				} else {
 					StringBuilder sb = new StringBuilder();
-					
+
 					for (LichLamViec lich : dsLich) {
 						if (lich.getNhanVien() != null) {
 							NhanVien nv = lich.getNhanVien();

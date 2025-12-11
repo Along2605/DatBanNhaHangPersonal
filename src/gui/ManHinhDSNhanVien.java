@@ -1,6 +1,8 @@
 package gui;
 
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -12,6 +14,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
 import dao.NhanVienDAO;
+import dao.TaiKhoanDAO;
 import entity.NhanVien;
 
 public class ManHinhDSNhanVien extends JPanel {
@@ -27,7 +30,10 @@ public class ManHinhDSNhanVien extends JPanel {
     private NhanVienDAO nhanVienDAO;
     private DefaultTableModel model;
     private JTable table;
-
+	private JButton btnCapMK;
+	
+	String maNVDaChon = null;
+	private TaiKhoanDAO taiKhoan_DAO;
     public ManHinhDSNhanVien() {
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.decode("#EAF1F9"));
@@ -215,11 +221,13 @@ public class ManHinhDSNhanVien extends JPanel {
         pnButtons.setBackground(Color.decode("#EAF1F9"));
 
         btnThem = createButton("Thêm", "img/add.png");
+        btnCapMK = createButton("Cấp lại MK", "img/reset-password.png");
         btnSua = createButton("Sửa", "img/edit.png");
         btnXoa = createButton("Xóa", "img/delete.png");
         btnLamMoi = createButton("Làm mới", "img/refresh.png");
 
         pnButtons.add(btnThem);
+        pnButtons.add(btnCapMK);
         pnButtons.add(btnSua);
         pnButtons.add(btnXoa);
         pnButtons.add(btnLamMoi);
@@ -307,7 +315,7 @@ public class ManHinhDSNhanVien extends JPanel {
         
         // Làm mới
         btnLamMoi.addActionListener(e -> lamMoi());
-        
+        btnCapMK.addActionListener(e -> capLaiMK());
         btnSua.addActionListener(e-> suaThongTinNhanVien());
         btnThem.addActionListener(e-> themNhanVienMoi());
         btnXoa.addActionListener(e-> xoaNhanVien());
@@ -515,7 +523,55 @@ public class ManHinhDSNhanVien extends JPanel {
 			
 		}
 	}
-
+	
+	private void capLaiMK() {
+		table.addMouseListener(new MouseListener() {
+			
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mousePressed(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int row = table.getSelectedRow();
+				if(row >= 0) {
+					maNVDaChon = table.getValueAt(row, 0).toString().trim();
+					System.out.println( "ok " + maNVDaChon);
+				}
+				
+			}
+		});
+		System.out.println(maNVDaChon);
+		taiKhoan_DAO = new TaiKhoanDAO();
+		boolean ok = taiKhoan_DAO.capLaiMatKhau(maNVDaChon);
+		if(ok == true) {
+			JOptionPane.showMessageDialog(table,  "Mật khẩu được cấp lại cho tài khoản " + maNVDaChon + " là: 12345678");
+		}
+		else {
+			JOptionPane.showMessageDialog(table, "Cấp lại mật khẩu cho tài khoản " + maNVDaChon + " thất bại!");
+		}
+		
+	}
 	public static void main(String[] args) {
     	SwingUtilities.invokeLater(() -> {
 			// Tạo JFrame

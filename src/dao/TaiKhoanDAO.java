@@ -105,8 +105,19 @@ public class TaiKhoanDAO {
 		return dsTK;
 	}
 	
+	public boolean capLaiMatKhau(String maNV) {
+        String sql = "UPDATE TaiKhoan SET passWord = 12345678 where maNV = ?";
+        Connection con = ConnectDB.getConnection();
+        try (
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, maNV);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
 	
 	
-	
+	}
 	
 }

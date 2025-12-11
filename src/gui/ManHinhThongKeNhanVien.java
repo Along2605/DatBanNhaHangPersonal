@@ -165,7 +165,7 @@ public class ManHinhThongKeNhanVien extends JPanel {
         scrollPane.setBounds(10, 20, 650, 330);
         panelTable.add(scrollPane);
         
-        String[] cols = {"Mã NV", "Họ tên", "Chức vụ", "Lương cơ bản", "Số giờ làm", "Số hóa đơn", "Tỉ lệ năng xuất"};
+        String[] cols = {"Mã NV", "Họ tên", "Chức vụ", "Lương cơ bản", "Số giờ làm", "Số hóa đơn", "Tỉ lệ năng suất"};
         modelTable = new DefaultTableModel(cols, 0) {
             @Override 
             public boolean isCellEditable(int row, int column) { 
@@ -260,7 +260,7 @@ public class ManHinhThongKeNhanVien extends JPanel {
             
             Row row2 = sheet.createRow(2);
             row2.createCell(0).setCellValue("Tổng số nhân viên: " + lblTongNhanVien.getText());
-            row2.createCell(3).setCellValue("Nhân viên năng xuất: " + lblNhanVienNangXuat.getText() + " (" + lblPhanTramNangXuat.getText() + ")");
+            row2.createCell(3).setCellValue("Nhân viên năng suất: " + lblNhanVienNangXuat.getText() + " (" + lblPhanTramNangXuat.getText() + ")");
             
             Row row3 = sheet.createRow(3);
             row3.createCell(0).setCellValue("Nhân viên thu động: " + lblNhanVienThuDong.getText() + " (" + lblPhanTramThuDong.getText() + ")");
@@ -273,7 +273,7 @@ public class ManHinhThongKeNhanVien extends JPanel {
             headerStyle.setAlignment(HorizontalAlignment.CENTER);
             
             Row header = sheet.createRow(5);
-            String[] cols = {"Mã NV", "Họ tên", "Chức vụ", "Lương cơ bản", "Số giờ làm", "Số hóa đơn", "Tỉ lệ năng xuất"};
+            String[] cols = {"Mã NV", "Họ tên", "Chức vụ", "Lương cơ bản", "Số giờ làm", "Số hóa đơn", "Tỉ lệ năng suất"};
             for (int i = 0; i < cols.length; i++) {
                 Cell c = header.createCell(i);
                 c.setCellValue(cols[i]);
@@ -377,7 +377,7 @@ public class ManHinhThongKeNhanVien extends JPanel {
         lblTitle1.setBounds(105, 25, 150, 25);
         panel.add(lblTitle1);
         
-        JLabel lblTitle2 = new JLabel("năng xuất");
+        JLabel lblTitle2 = new JLabel("năng suất");
         lblTitle2.setFont(new Font("Segoe UI", Font.BOLD, 13));
         lblTitle2.setBounds(105, 43, 150, 25);
         panel.add(lblTitle2);

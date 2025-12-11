@@ -20,6 +20,9 @@ import javax.swing.text.JTextComponent;
 
 import com.toedter.calendar.JDateChooser;
 
+import java.awt.Frame;
+import javax.swing.SwingUtilities;
+
 import dao.BanAnDAO;
 import dao.PhieuDatBanDAO;
 import entity.BanAn;
@@ -28,6 +31,9 @@ import entity.PhieuDatBan;
 public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener{
 
     private static final long serialVersionUID = 1L;
+    
+    // Thêm biến để callback khi đặt bàn thành công
+    private Runnable onDatBanSuccess;
     
     // Components
     private JTextField txtMaBan;
@@ -39,7 +45,7 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
     
     private JDateChooser dateFilter;
     private JComboBox<String> cboTimeFilter;
-    private JButton btnLocNhanh;
+    
     
     // Hằng số khung giờ
     private static final int KHUNG_SANG = 1;
@@ -66,27 +72,27 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
 
 //	private JButton btnTaoHoaDon;
     
+	// Sửa constructor để nhận callback (OPTIONAL - nếu cần refresh từ màn hình chính)
 	public TraCuuBanAn() {
+	    this(null);
+	}
+
+	public TraCuuBanAn(Runnable onDatBanSuccess) {
+	    this.onDatBanSuccess = onDatBanSuccess;
 	    setLayout(new BorderLayout(10, 10));
 	    setBackground(BACKGROUND_COLOR);
 	    setBorder(new EmptyBorder(20, 20, 20, 20));
-	    // reset, tự động dọn bàn
-//	    dao.resetTrangThaiBanHangNgay();
 
-	    // Add components
 	    add(createHeaderPanel(), BorderLayout.NORTH);
 	    add(createSearchPanel(), BorderLayout.WEST);
 	    add(createTablePanel(), BorderLayout.CENTER);
 	    add(createButtonPanel(), BorderLayout.SOUTH);
 
-	    // Load initial data
 	    loadDanhSachBanAn();
 
-	    // Add action listeners for buttons
 	    btnTimKiem.addActionListener(e -> timKiemBanAn());
 	    btnLamMoi.addActionListener(e -> lamMoiForm());
 	}
-    
     /**
      * Tạo panel tiêu đề
      */
@@ -204,24 +210,18 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         cboTimeFilter.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cboTimeFilter.setPreferredSize(new Dimension(120, 30));
         
-     // Tự động chọn khung giờ hiện tại
+        // Tự động chọn khung giờ hiện tại
         int currentHour = java.time.LocalTime.now().getHour();
         cboTimeFilter.setSelectedIndex(xacDinhKhungGioIndex(currentHour));
 
-        btnLocNhanh = new JButton("Xem");
-        btnLocNhanh.setBackground(MAIN_COLOR);
-        btnLocNhanh.setForeground(Color.WHITE);
-        btnLocNhanh.setFocusPainted(false);
-        btnLocNhanh.setPreferredSize(new Dimension(60, 30));
-        btnLocNhanh.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-     // Sự kiện lọc
-        btnLocNhanh.addActionListener(e -> loadDanhSachBanAn());
+        // ✅ Tự động lọc khi thay đổi ngày hoặc khung giờ
+        dateFilter.addPropertyChangeListener("date", e -> loadDanhSachBanAn());
+        cboTimeFilter.addActionListener(e -> loadDanhSachBanAn());
         
         filterPanel.add(lblNgay);
         filterPanel.add(dateFilter);
         filterPanel.add(cboTimeFilter);
-        filterPanel.add(btnLocNhanh);
+        
         
         topBarPanel.add(filterPanel, BorderLayout.EAST);
         
@@ -289,19 +289,95 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
         btnXemChiTiet = createButton("Xem chi tiết", MAIN_COLOR);
         btnXemChiTiet.setPreferredSize(new Dimension(150, 40));
         
+        // ✅ THÊM NÚT ĐẶT BÀN NHANH
+        JButton btnDatBanNhanh = createButton("Đặt bàn nhanh", new Color(76, 175, 80));
+        btnDatBanNhanh.setPreferredSize(new Dimension(150, 40));
+        btnDatBanNhanh.addActionListener(e -> datBanNhanh());
+        
 //        btnTaoHoaDon = createButton("Tạo hóa đơn", new Color(76, 175, 80));
 //        btnTaoHoaDon.setPreferredSize(new Dimension(150, 40));
         
         panel.add(btnXemChiTiet);
 //        panel.add(btnTaoHoaDon);
-        
+        panel.add(btnDatBanNhanh);        
         btnXemChiTiet.addActionListener(this);
 //        btnTaoHoaDon.addActionListener(this);
         
         return panel;
     }
     
-    /**
+    private void datBanNhanh() {
+	    int selectedRow = tableBanAn.getSelectedRow();
+	    
+	    if (selectedRow == -1) {
+	        JOptionPane.showMessageDialog(this,
+	            "Vui lòng chọn một bàn để đặt!",
+	            "Thông báo", JOptionPane.WARNING_MESSAGE);
+	        return;
+	    }
+    
+	    String maBan = tableModel.getValueAt(selectedRow, 0).toString();
+	    String trangThai = tableModel.getValueAt(selectedRow, 4).toString();
+    
+	    // Kiểm tra bàn có trống không
+	    if (!trangThai.equals("Trống")) {
+	        int confirm = JOptionPane.showConfirmDialog(this,
+	            "Bàn này đang ở trạng thái: " + trangThai + "\n" +
+	            "Bạn vẫn muốn đặt bàn này?",
+	            "Xác nhận", JOptionPane.YES_NO_OPTION);
+	        
+	        if (confirm != JOptionPane.YES_OPTION) {
+	            return;
+	        }
+	    }
+    
+	    // Lấy thông tin ngày giờ đang xem
+	    Date date = dateFilter.getDate();
+	    if (date == null) date = new Date();
+	    LocalDate ngayXem = new java.sql.Date(date.getTime()).toLocalDate();
+	    int khungGio = cboTimeFilter.getSelectedIndex() + 1;
+	    
+	    // Mở form đặt bàn với thông tin đã chọn
+	    moFormDatBan(maBan, ngayXem, khungGio);
+    }
+    
+    
+    // Method mở form đặt bàn
+    private void moFormDatBan(String maBanChon, LocalDate ngayDat, int khungGio) {
+        try {
+            Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+            
+            // Tạo dialog đặt bàn
+            JDialog dialog = new JDialog(parentFrame, "Đặt bàn", true);
+            dialog.setSize(1400, 800);
+            dialog.setLocationRelativeTo(parentFrame);
+            
+            // Tạo panel DatBan
+            DatBan panelDatBan = new DatBan();
+            
+            // ✅ TỰ ĐỘNG ĐIỀN THÔNG TIN
+            panelDatBan.tuDongDienThongTin(maBanChon, ngayDat, khungGio);
+            
+            dialog.add(panelDatBan);
+            dialog.setVisible(true);
+            
+            // Refresh lại danh sách sau khi đóng dialog
+            loadDanhSachBanAn();
+            
+            // Callback nếu có
+            if (onDatBanSuccess != null) {
+                onDatBanSuccess.run();
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Lỗi khi mở form đặt bàn: " + e.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+	/**
      * Thêm field vào form
      */
     private void addFormField(JPanel panel, GridBagConstraints gbc, int row, String labelText, JComponent component) {
@@ -448,8 +524,13 @@ public class TraCuuBanAn extends JPanel implements ActionListener, MouseListener
             String loaiBan = cboLoaiBan.getSelectedItem().toString();
             String soLuongCho = txtSoLuongCho.getText().trim();
             
-
-            List<BanAn> dsBan = dao.getAllBanAn();
+            // 🔥 SỬA: Lấy danh sách bàn theo ngày và khung giờ đã chọn
+            Date date = dateFilter.getDate();
+            if (date == null) date = new Date();
+            LocalDate localDate = new java.sql.Date(date.getTime()).toLocalDate();
+            int khungGio = cboTimeFilter.getSelectedIndex() + 1;
+            
+            List<BanAn> dsBan = dao.getDanhSachBanTheoNgayGio(localDate, khungGio);
             if (dsBan == null) {
                 dsBan = new ArrayList<>();
             }

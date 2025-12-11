@@ -103,6 +103,7 @@ public class ManHinhChinhQuanLy extends JFrame {
 		MenuBuilderQuanLy menuBuilder = new MenuBuilderQuanLy();
 		menuBar.add(menuBuilder.createTrangChu());
 		menuBar.add(menuBuilder.createMonAnMenu());
+		menuBar.add(menuBuilder.createBanAnMenu());
 		menuBar.add(menuBuilder.createKhuVucMenu());
 		menuBar.add(menuBuilder.createCaLamMenu());
 		menuBar.add(menuBuilder.createNhanVienMenu());
@@ -184,21 +185,32 @@ public class ManHinhChinhQuanLy extends JFrame {
 			menu.add(createMenuItem("Thống kê", e -> showPanel(new ManHinhThongKeMonAn())));
 			return menu;
 		}
-
-		public JMenu createKhuVucMenu() {
-			JMenu menu = createMenu("Khu vực");
-			
+		
+		public JMenu createBanAnMenu() {
+			JMenu menu = createMenu("Bàn ăn");
+			menu.add(createMenuItem("Đặt bàn", e -> showPanel(new DatBan())));
 			menu.add(createMenuItem("Cập nhật bàn ăn", e -> showPanel(new ThemBanAn())));
+			menu.add(createMenuItem("Thêm loại bàn", e -> showPanel(new QuanLyLoaiBan())));
 			menu.add(createMenuItem("Tra cứu bàn ăn", e -> showPanel(new TraCuuBanAn())));
 
 			return menu;
 		}
 
+		public JMenu createKhuVucMenu() {
+			JMenu menu = createMenu("Khu vực");
+			menu.add(createMenuItem("Sơ đồ bàn ăn", e -> showPanel(new SoDoBanAn())));
+			menu.add(createMenuItem("Quản lý khu vực", e -> showPanel(new QuanLyKhuVuc())));
+
+			return menu;
+		}
+
+
 		public JMenu createCaLamMenu() {
             JMenu menu = createMenu("Ca làm");
-            menu.add(createMenuItem("Tra cứu ca làm", e -> showPanel(new TraCuuCaLam())));
-            menu.add(createMenuItem("Phân ca làm", e -> showPanel(new PhanCaLam())));
+            menu.add(createMenuItem("Xem lịch làm", e -> showPanel(new XemLichLam())));
             menu.add(createMenuItem("Cập nhật ca làm", e -> showPanel(new ThemCaLam())));
+            menu.add(createMenuItem("Phân ca làm", e -> showPanel(new PhanCaLam())));
+
             return menu;
         }
 
@@ -212,7 +224,6 @@ public class ManHinhChinhQuanLy extends JFrame {
 		}
 		public JMenu createKhachHangMenu() {
             JMenu menu = createMenu("Khách hàng");
-            menu.add(createMenuItem("Thêm mới", e -> showPanel(new TraCuuKhachHang())));
             menu.add(createMenuItem("Tra cứu", e -> showPanel(new TraCuuKhachHang())));
             return menu;
         }

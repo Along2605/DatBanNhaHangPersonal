@@ -2,6 +2,8 @@ package gui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 
@@ -11,9 +13,10 @@ import dao.ChiTietHoaDonDAO;
 import dao.HoaDonDAO;
 import dao.KhuVucDAO;
 import dao.LoaiBanDAO;
+import dao.PhieuDatBanDAO;
 import entity.BanAn;
 import entity.LoaiBan;
-import util.Session;
+import entity.PhieuDatBan;
 
 public class SoDoBanAn extends JPanel {
 
@@ -26,13 +29,15 @@ public class SoDoBanAn extends JPanel {
 	private LoaiBanDAO loaiBan_DAO;
 	private ChiTietHoaDonDAO ctHD_DAO;
 	private HoaDonDAO hoaDon_DAO;
-
+	private BanAnCallback chuyenBanCallback;
 	private JPanel pnDanhSachBan; // panel chính chứa sơ đồ bàn
 	private BanAn banCanChuyen = null;
 	private JLabel lblTitle;
 	private JTextField txtTim;
 	private JButton btnTim;
 	private JButton btnLamMoi;
+	private boolean isChuyenMode = true;
+	private PhieuDatBanDAO phieuDat_DAO;
 
 	public SoDoBanAn() {
 		try {
@@ -47,6 +52,7 @@ public class SoDoBanAn extends JPanel {
 		khu_DAO = new KhuVucDAO();
 		hoaDon_DAO = new HoaDonDAO();
 		ctHD_DAO = new ChiTietHoaDonDAO();
+		phieuDat_DAO = new PhieuDatBanDAO();
 
 		setLayout(new BorderLayout());
 
@@ -100,14 +106,15 @@ public class SoDoBanAn extends JPanel {
 
 		// Text nhập
 		JLabel lblTim = new JLabel("Nhập");
-		txtTim = new JTextField(10);
-		btnTim = new JButton("Tìm");
-		btnLamMoi = new JButton("Làm mới");
+		txtTim = new JTextField();
+		txtTim.setPreferredSize(new Dimension(140, 25));
+		btnTim = createButton("Tìm kiếm", "img/search.png");
+		btnLamMoi = createButton("Làm mới", "img/refresh.png");
 		pnLoc.add(new JLabel("Nhập"));
 		pnLoc.add(txtTim);
 		pnLoc.add(btnTim);
 		pnLoc.add(btnLamMoi);
-		
+
 		btnTim.addActionListener(e -> {
 			String loaiBan = (String) cbLoaiBan.getSelectedItem();
 			String viTri = (String) cbViTri.getSelectedItem();
@@ -167,7 +174,7 @@ public class SoDoBanAn extends JPanel {
 			pnDanhSachBan.revalidate();
 			pnDanhSachBan.repaint();
 		});
-	
+
 		btnLamMoi.addActionListener(e -> {
 			cbLoaiBan.setSelectedIndex(0);
 			cbTrangThai.setSelectedIndex(0);
@@ -223,11 +230,10 @@ public class SoDoBanAn extends JPanel {
 
 	private JPanel taoBan(String viTri, String tenBan, String trangThai, String loaiBan, BanAn ban) {
 		JPanel pnBan = new JPanel(new BorderLayout());
-		Dimension size = new Dimension(200, 160); // kích thước chuẩn
-	    pnBan.setPreferredSize(size);
-	    pnBan.setMaximumSize(size);
-	    pnBan.setMinimumSize(size);
-//		pnBan.setPreferredSize(new Dimension(200, 160));
+		Dimension size = new Dimension(200, 160);
+		pnBan.setPreferredSize(size);
+		pnBan.setMaximumSize(size);
+		pnBan.setMinimumSize(size);
 		pnBan.setBorder(
 				BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
 						BorderFactory.createEmptyBorder(10, 10, 10, 10)));
@@ -260,112 +266,143 @@ public class SoDoBanAn extends JPanel {
 		default -> new Color(240, 240, 240);
 		};
 		pnBan.setBackground(bg);
+		
+		if (trangThai.equals("Đã đặt")) {
+		    // Sửa: dùng hàm đúng tên và kiểm tra null
+		    PhieuDatBan phieuDat = phieuDat_DAO.layPhieuDatHienTaiCuaBan(ban.getMaBan());
+
+		    if (phieuDat != null && phieuDat.getNgayDat() != null) {
+		        LocalDateTime ngayDat = phieuDat.getNgayDat();
+		        String ngay = ngayDat.toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+		        String gio = ngayDat.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+
+		        JLabel lblThongTin = new JLabel("<html>"
+		                + "<span style='font-family:Segoe UI; font-size:12px;'>"
+		                + "<b>Khách:</b> " + (phieuDat.getKhachHang() != null ? phieuDat.getKhachHang().getHoTen() : "Chưa rõ") + "<br>"
+		                + "<b>Ngày đặt: </b> " + ngay + "<br>"
+		                + "<b>Giờ đặt: </b> " + gio + "<br>"
+		                + "</span></html>");
+
+		        lblThongTin.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+		        lblThongTin.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+
+		        JPanel pnThongTin = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		        pnThongTin.setOpaque(false);
+		        pnThongTin.add(lblThongTin);
+		        pnBan.add(pnThongTin, BorderLayout.CENTER);
+		    }
+		    // Nếu phieuDat == null → không làm gì cả, không crash
+		}
 
 		pnBan.addMouseListener(new java.awt.event.MouseAdapter() {
-		    @Override
-		    public void mouseClicked(java.awt.event.MouseEvent e) {
-		        if (banCanChuyen == null) {
-		            // Chưa chọn bàn gốc → mở dialog bình thường hoặc cho chọn làm bàn gốc
-		            new DialogChiTietBanAn((Frame) SwingUtilities.getWindowAncestor(pnBan), ban, selectedBan -> {
-		                banCanChuyen = selectedBan;
-		                lblTitle.setText("CHUYỂN/GỘP BÀN - Đã chọn: " + banCanChuyen.getTenBan() + " → Chọn bàn đích");
-		                loadBanAn(); // highlight bàn đang chọn
-		            }).setVisible(true);
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				lblTitle.setText("CHUYỂN BÀN");
+				if (banCanChuyen != null) {
+					if (ban.getTrangThai().equals("Trống")) {
+						int xacNhan = JOptionPane.showConfirmDialog(pnBan,
+								"Chuyển từ bàn " + banCanChuyen.getTenBan() + " sang bàn " + ban.getTenBan() + "?",
+								"Xác nhận", JOptionPane.YES_NO_CANCEL_OPTION);
 
-		        } else {
-		            // Đã chọn bàn gốc → giờ click vào bàn khác
-		            if (ban.equals(banCanChuyen)) {
-		                banCanChuyen = null;
-		                lblTitle.setText("SƠ ĐỒ BÀN ĂN");
-		                loadBanAn();
-		                return;
-		            }
+						if (xacNhan == JOptionPane.YES_OPTION) {
+							try {
+								String maHDCu = ban_DAO.layMaHDTuBan(banCanChuyen.getMaBan());
+								System.out.println("- Mã hóa đơn cũ: " + maHDCu);
 
-		            if ("Trống".equals(ban.getTrangThai())) {
-		                // Chuyển sang bàn trống
-		                int confirm = JOptionPane.showConfirmDialog(pnBan,
-		                    "Chuyển từ bàn " + banCanChuyen.getTenBan() + " sang bàn " + ban.getTenBan() + "?",
-		                    "Xác nhận chuyển bàn", JOptionPane.YES_NO_OPTION);
-		                if (confirm == JOptionPane.YES_OPTION) {
-		                    if (ban_DAO.chuyenBan(banCanChuyen.getMaBan(), ban.getMaBan())) {
-		                        JOptionPane.showMessageDialog(pnBan, "Chuyển bàn thành công!");
-		                    } else {
-		                        JOptionPane.showMessageDialog(pnBan, "Chuyển bàn thất bại!");
-		                    }
-		                    banCanChuyen = null;
-		                    lblTitle.setText("SƠ ĐỒ BÀN ĂN");
-		                    loadBanAn();
-		                }
-		            } 
-		            else if ("Đang sử dụng".equals(ban.getTrangThai())) {
-		                // Gộp bàn: bàn gốc (banCanChuyen) → gộp vào bàn đích (ban)
-		                int confirm = JOptionPane.showConfirmDialog(pnBan,
-		                    "Gộp bàn " + banCanChuyen.getTenBan() + " vào bàn " + ban.getTenBan() + "?\n" +
-		                    "→ Tất cả món ăn sẽ được chuyển sang bàn " + ban.getTenBan() + "\n" +
-		                    "→ Bàn " + banCanChuyen.getTenBan() + " sẽ trống",
-		                    "Xác nhận gộp bàn", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+								boolean updateHD = hoaDon_DAO.chuyenBan(maHDCu, ban.getMaBan());
+								
+								if (!updateHD) {
+									JOptionPane.showMessageDialog(null, "Cập nhật hóa đơn thất bại!");
+									return;
+								}
+								ban_DAO.capNhatTrangThaiBan(banCanChuyen.getMaBan(), "Trống");
+								ban_DAO.capNhatTrangThaiBan(ban.getMaBan(), "Đang sử dụng");
 
-		                if (confirm == JOptionPane.YES_OPTION) {
-		                    String maBanCu = banCanChuyen.getMaBan();
-		                    String maBanMoi = ban.getMaBan();
+								JOptionPane.showMessageDialog(pnBan, "Chuyển bàn thành công!");
+								
+								if (chuyenBanCallback != null) {
+									chuyenBanCallback.onBanSelected(banCanChuyen, ban, true);
+								}
 
-		                    try {
-		                        // 1. Lấy mã hóa đơn của 2 bàn
-		                        String maHDCu = ban_DAO.layMaHDTuBan(maBanCu);
-		                        String maHDDich = ban_DAO.layMaHDTuBan(maBanMoi);
+								banCanChuyen = null;
+								loadBanAn();
+							} catch (Exception e2) {
+								e2.printStackTrace();
+								JOptionPane.showMessageDialog(pnBan, "Chuyển bàn thất bại!");
+							}
+						}
+					} else if ("Đang sử dụng".equals(ban.getTrangThai())) {
 
-		                        if (maHDCu == null) {
-		                            JOptionPane.showMessageDialog(pnBan, "Bàn gốc không có hóa đơn!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-		                            return;
-		                        }
-		                        if (maHDDich == null) {
-		                            JOptionPane.showMessageDialog(pnBan, "Bàn đích không có hóa đơn để gộp!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-		                            return;
-		                        }
+						String maBanCu = banCanChuyen.getMaBan();
+						String maBanMoi = ban.getMaBan();
 
-		                        // 2. Gộp chi tiết hóa đơn từ bàn cũ → bàn mới
-		                        boolean gopThanhCong = ctHD_DAO.gopHoaDon(maHDCu, maHDDich, maBanCu, maBanMoi, Session.getMaNhanVienDangNhap());
-		                        if (!gopThanhCong) {
-		                            JOptionPane.showMessageDialog(pnBan, "Gộp chi tiết hóa đơn thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-		                            return;
-		                        }
+						String maHDCu = ban_DAO.layMaHDTuBan(maBanCu);
+						String maHDDich = ban_DAO.layMaHDTuBan(maBanMoi);
 
-		                        // 3. Xóa hóa đơn cũ
-		                        hoaDon_DAO.xoaHoaDon(maHDCu, Session.getMaNhanVienDangNhap());
+						try {
+							if(maHDDich == null) {
+								JOptionPane.showMessageDialog(null, "Bàn " + ban.getTenBan() + " chưa có hóa đơn nên không thể gộp bàn!");
+								return;
+							}
+							boolean  gopHD = ctHD_DAO.gopHoaDon(maHDCu, maHDDich, maBanCu, maBanMoi);
+							if(!gopHD) {
+								JOptionPane.showMessageDialog(null, "Không thể xóa hóa đơn nguồn!");
+								return;
+							}
+							
+							ban_DAO.capNhatTrangThaiBan(maBanCu, "Trống");
+							JOptionPane.showMessageDialog(null, "Gộp bàn thành công!");
+							banCanChuyen = null;
+							loadBanAn();
 
-		                        // 4. Cập nhật trạng thái bàn
-		                        ban_DAO.capNhatTrangThaiBan(maBanCu, "Trống");
-		                        ban_DAO.capNhatTrangThaiBan(maBanMoi, "Đang sử dụng");
+						} catch (Exception e1) {
+							e1.printStackTrace();
+							JOptionPane.showMessageDialog(null, "Gộp bàn thất bại!");
+						}
 
-		                        // cap nhat lai ma ban trong hoa don đích
-		                        // hoaDon_DAO.capNhatMaBanHoaDon(maHDDich, maBanMoi);
+					}
 
-		                        JOptionPane.showMessageDialog(pnBan,
-		                            "Gộp bàn thành công!\n" +
-		                            "→ Bàn " + banCanChuyen.getTenBan() + " đã trống\n" +
-		                            "→ Tất cả món đã chuyển sang bàn " + ban.getTenBan(),
-		                            "Thành công", JOptionPane.INFORMATION_MESSAGE);
+				} else {
+					DialogChiTietBanAn dialog = new DialogChiTietBanAn((Frame) SwingUtilities.getWindowAncestor(pnBan),
+							ban, 
+							((banNguon, banDich, sussecces) -> {
+								banCanChuyen = banNguon;
+								isChuyenMode = sussecces;
+								loadBanAn();
+							})
 
-		                        // Reset trạng thái chọn bàn
-		                        banCanChuyen = null;
-		                        lblTitle.setText("SƠ ĐỒ BÀN ĂN");
-
-		                        // Cập nhật lại giao diện
-		                        loadBanAn();
-
-		                    } catch (Exception ex) {
-		                        ex.printStackTrace();
-		                        JOptionPane.showMessageDialog(pnBan, "Lỗi khi gộp bàn: " + ex.getMessage(), "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
-		                    }
-		                }
-		            }
-		        }
-		    }
+					);
+					dialog.setVisible(true);
+				}
+			}
 		});
 
 		return pnBan;
 	}
+	
+	private JButton createButton(String text, String iconPath) {
+		JButton button = new JButton(text);
+		button.setFont(new Font("Arial", Font.BOLD, 14));
+		button.setPreferredSize(new Dimension(120, 30));
+		button.setBackground(Color.decode("#4CAF50"));
+		button.setForeground(Color.WHITE);
+		button.setFocusPainted(false);
+		button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+		button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
+		if (iconPath != null) {
+			try {
+				ImageIcon icon = new ImageIcon(iconPath);
+				Image img = icon.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
+				button.setIcon(new ImageIcon(img));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		return button;
+	}
+	
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 			JFrame frame = new JFrame("Sơ đồ bàn ăn");

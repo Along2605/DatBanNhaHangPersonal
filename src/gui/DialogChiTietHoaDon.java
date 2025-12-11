@@ -246,7 +246,7 @@ public class DialogChiTietHoaDon extends JDialog {
                 row[2] = formatCurrency(cthd.getDonGia());
                 row[3] = cthd.getSoLuong();
                 row[4] = formatCurrency(cthd.getThanhTien());
-                row[5] = "Đã phục vụ"; // Hoặc lấy từ trường trạng thái nếu có
+                row[5] = "Đang chuẩn bị"; // Hoặc lấy từ trường trạng thái nếu có
                 row[6] = cthd.getGhiChu() != null ? cthd.getGhiChu() : "";
                 
                 tableModel.addRow(row);

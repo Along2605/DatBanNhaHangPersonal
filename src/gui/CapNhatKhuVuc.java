@@ -2,11 +2,15 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -29,7 +34,9 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
 import connectDB.ConnectDB;
 import dao.KhuVucDAO;
@@ -56,7 +63,6 @@ public class CapNhatKhuVuc extends JPanel implements ActionListener, MouseListen
 	private JLabel lblTenKV;
 	private JTable tableKV;
 	private JButton btnTim;
-	private JButton btnRefresh;
 
 	public CapNhatKhuVuc() {
 		ConnectDB.getInstance().connect();
@@ -100,14 +106,12 @@ public class CapNhatKhuVuc extends JPanel implements ActionListener, MouseListen
 
 		// Buttons
 		JPanel pnButton = new JPanel(new GridLayout(1, 4, 10, 0));
-		btnThem = new JButton("Thêm");
-		btnXoa = new JButton("Xóa");
-		btnSua = new JButton("Sửa");
-//		btnHuy = new JButton("Hủy");
+		btnThem = createButton("Thêm", "img/add.png");
+		btnXoa = createButton("Xóa", "img/delete.png");
+		btnSua = createButton("Sửa", "img/edit.png");
 		pnButton.add(btnThem);
 		pnButton.add(btnXoa);
 		pnButton.add(btnSua);
-//		pnButton.add(btnHuy);
 		gbc.gridx = 0;
 		gbc.gridy = row;
 		gbc.gridwidth = 2;
@@ -156,27 +160,58 @@ public class CapNhatKhuVuc extends JPanel implements ActionListener, MouseListen
 		}
 		pnTim.add(cboTenKV);
 
-		btnTim = new JButton("Tìm");
-		btnRefresh = new JButton("Refresh");
+		btnTim = createButton("Tìm kiếm", "img/search.png");
+		btnHuy = createButton("Làm mới", "img/refresh.png");
 		pnTim.add(btnTim);
-		pnTim.add(btnRefresh);
+		pnTim.add(btnHuy);
 
 		// table
 		String[] tieuDe = { "STT", "Mã khu vực", "Tên khu vực", "Vị trí" };
 		modelKV = new DefaultTableModel(tieuDe, 0);
 		tableKV = new JTable(modelKV);
+		// Đổi màu tiêu đề
+		JTableHeader header = tableKV.getTableHeader();
+		header.setBackground(Color.decode("#4CAF50"));
+		header.setForeground(Color.WHITE);
+		header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+		tableKV.setSelectionBackground(new Color(51, 153, 255));
+		tableKV.setSelectionForeground(Color.WHITE);
+
+		tableKV.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+			@Override
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+					boolean hasFocus, int row, int column) {
+
+				Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+				if (isSelected) {
+					c.setBackground(new Color(51, 153, 255));
+					c.setForeground(Color.WHITE);
+				} else {
+					if (row % 2 == 0) {
+						c.setBackground(new Color(240, 240, 240));
+					} else {
+						c.setBackground(Color.WHITE);
+					}
+					c.setForeground(Color.BLACK);
+				}
+
+				return c;
+			}
+		});
+
 		docDuLieuLenBang();
 		scrollKV = new JScrollPane(tableKV);
-
 		pnCenter.add(scrollKV, BorderLayout.CENTER);
 
 		// Sư kiện
-//		btnHuy.addActionListener(this);
 		btnSua.addActionListener(this);
 		btnThem.addActionListener(this);
 		btnXoa.addActionListener(this);
 		btnTim.addActionListener(this);
-		btnRefresh.addActionListener(this);
+		btnTim.addActionListener(this);
+		btnHuy.addActionListener(this);
 		tableKV.addMouseListener(this);
 	}
 
@@ -245,13 +280,14 @@ public class CapNhatKhuVuc extends JPanel implements ActionListener, MouseListen
 		if (o.equals(btnSua)) {
 			sua();
 		}
-//		if (o.equals(btnHuy)) {
-//			huy();
-//		}
+		if (o.equals(btnHuy)) {
+			System.out.println("ok");
+			huy();
+		}
 		if (o.equals(btnTim)) {
 			tim();
 		}
-		if (o.equals(btnRefresh)) {
+		if (o.equals(btnHuy)) {
 			refresh();
 		}
 	}
@@ -286,22 +322,21 @@ public class CapNhatKhuVuc extends JPanel implements ActionListener, MouseListen
 		String ma = txtMaKV.getText().trim();
 		String ten = txtTenKV.getText().trim();
 		String viTri = txtViTri.getText().trim();
-		
+
 		KhuVuc kv = new KhuVuc(ma, ten, viTri);
-		for(int i = 0; i < modelKV.getRowCount(); i++) {
-			String id = modelKV.getValueAt(i, 1).toString();
-			if(id.equalsIgnoreCase(ma)) {
-				JOptionPane.showMessageDialog(this, "Mã khu vực đã tồn tại, thêm thất bại!");
-				return;
-			}
-		}
+		;
+		modelKV.insertRow(0, new Object[] { 0, kv.getMaKhuVuc(), kv.getTenKhuVuc(), kv.getViTri() });
 		try {
-			kv_dao.themKhuVuc(kv);
-			modelKV.insertRow(0, new Object[] {0, kv.getMaKhuVuc(), kv.getTenKhuVuc(), kv.getViTri() });
+			if (kv_dao.themKhuVuc(kv)) {
+				JOptionPane.showMessageDialog(this, "Thêm ca làm thành công!");
+				docDuLieuLenBang();
+				huy();
+			} else {
+				JOptionPane.showConfirmDialog(this, "Thêm ca làm thất bại!");
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		huy();
 	}
 
 	private void tim() {
@@ -321,7 +356,6 @@ public class CapNhatKhuVuc extends JPanel implements ActionListener, MouseListen
 			dsKV = kv_dao.getAll();
 		} else {
 			dsKV = kv_dao.loc(tenKV, viTri);
-
 			if (dsKV == null || dsKV.isEmpty()) {
 				JOptionPane.showMessageDialog(this, "Không tìm thấy!");
 				dsKV = kv_dao.getAll();
@@ -380,7 +414,7 @@ public class CapNhatKhuVuc extends JPanel implements ActionListener, MouseListen
 		txtMaKV.setText(kv_dao.taoMaKhuVucMoi());
 		txtTenKV.setText("");
 		txtViTri.setText("");
-
+		tableKV.clearSelection();
 	}
 
 	private void capNhatTable(List<KhuVuc> danhSach) {
@@ -389,6 +423,29 @@ public class CapNhatKhuVuc extends JPanel implements ActionListener, MouseListen
 		for (KhuVuc kv : danhSach) {
 			modelKV.addRow(new Object[] { stt++, kv.getMaKhuVuc(), kv.getTenKhuVuc(), kv.getViTri() });
 		}
+	}
+
+	private JButton createButton(String text, String iconPath) {
+		JButton button = new JButton(text);
+		button.setFont(new Font("Arial", Font.BOLD, 14));
+		button.setPreferredSize(new Dimension(130, 38));
+		button.setBackground(Color.decode("#4CAF50"));
+		button.setForeground(Color.WHITE);
+		button.setFocusPainted(false);
+		button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+		button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+		if (iconPath != null) {
+			try {
+				ImageIcon icon = new ImageIcon(iconPath);
+				Image img = icon.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
+				button.setIcon(new ImageIcon(img));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		return button;
 	}
 
 	public static void main(String[] args) {

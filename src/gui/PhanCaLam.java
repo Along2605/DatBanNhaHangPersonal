@@ -15,6 +15,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
 import com.toedter.calendar.JDateChooser;
 import connectDB.ConnectDB;
@@ -77,22 +78,22 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 		gbc.anchor = GridBagConstraints.WEST;
 		int row = 0;
 
-		//ngày làm
+		// ngày làm
 		ngayLam = new JDateChooser();
 		ngayLam.setDateFormatString("dd/MM/yyyy");
 		ngayLam.setMinSelectableDate(new Date());
 		addFormField(pnForm, gbc, row++, "Ngày làm: *", ngayLam);
 
-		//chọn ca
+		// chọn ca
 		cbCaLam = new JComboBox<>();
 		loadCaLamViec();
 		addFormField(pnForm, gbc, row++, "Ca làm: *", cbCaLam);
 
-		//Tìm nhân viên
+		// Tìm nhân viên
 		btnTimNVTrongCa = new JButton("Tìm nhân viên trống ca");
 		addFormField(pnForm, gbc, row++, "Nhân viên", btnTimNVTrongCa);
 
-		//Trạng thái
+		// Trạng thái
 		rdLam = new JRadioButton("Làm");
 		rdLam.setSelected(true);
 		rdNghi = new JRadioButton("Nghỉ");
@@ -107,7 +108,7 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 		pnTrangThai.setOpaque(false);
 		addFormField(pnForm, gbc, row++, "Trạng thái", pnTrangThai);
 
-		//Buttons
+		// Buttons
 		JPanel pnButton = new JPanel(new GridLayout(1, 2, 15, 0));
 		btnPhanCa = new JButton("Phân ca");
 		btnSua = new JButton("Sửa");
@@ -183,14 +184,22 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 		}
 		modelLich = new DefaultTableModel(new Object[0][8], col);
 		tableLich = new JTable(modelLich);
-		tableLich.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		tableLich.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS); // cột đầu không đổi kích thước
 		tableLich.getColumnModel().getColumn(0).setPreferredWidth(150);
 		tableLich.setRowSelectionAllowed(false); // không click vào hang
 		tableLich.setColumnSelectionAllowed(true);
 		tableLich.setCellSelectionEnabled(true);
-		for (int i = 1; i < 8; i++) {
+		for (int i = 1; i < tableLich.getColumnCount(); i++) {
 			tableLich.getColumnModel().getColumn(i).setPreferredWidth(100);
 		}
+		// Đổi màu tiêu đề
+		JTableHeader header = tableLich.getTableHeader();
+		header.setBackground(Color.decode("#4CAF50"));
+		header.setForeground(Color.WHITE);
+		header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+		tableLich.setSelectionBackground(new Color(51, 153, 255));
+		tableLich.setSelectionForeground(Color.WHITE);
 
 		// đổi màu theo trạng thái
 		tableLich.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
@@ -217,7 +226,7 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 					LocalDate ngay = LocalDate.now().plusDays(column - 1);
 
 					// Tìm mã ca
-					ArrayList<CaLamViec> ca = caLamDAO.timCaLamViecTheoTen(tenCa);
+					List<CaLamViec> ca = caLamDAO.timCaLamViecTheoTen(tenCa);
 					if (ca != null && !ca.isEmpty()) {
 						String maCa = ca.get(0).getMaCa();
 						List<LichLamViec> dsLich = lichLamDAO.layLichLamViecTheoCaVaNgay(maCa, ngay);
@@ -252,6 +261,7 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 		// load lịch làm
 		loadLichLamTheoTuan();
 		JScrollPane scrollLich = new JScrollPane(tableLich);
+		scrollLich.setPreferredSize(null);
 		pnCenter.add(scrollLich, BorderLayout.CENTER);
 
 		// Note trạng thái
@@ -292,8 +302,8 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 		gbc.weightx = 0.7;
 		panel.add(component, gbc);
 	}
-	
-	//Load lên combobox
+
+	// Load lên combobox
 	private void loadCaLamViec() {
 		List<CaLamViec> dsCaLam = caLamDAO.layDanhSachCaLamViec();
 		cbCaLam.removeAllItems();
@@ -315,8 +325,8 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 			modelAll.addElement(nv.getMaNV() + " - " + nv.getHoTen());
 		}
 	}
-	
-	//Sự kiện
+
+	// Sự kiện
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
@@ -334,6 +344,7 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 			doiTrangThaiCa();
 		}
 	}
+
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		int row = tableLich.getSelectedRow();
@@ -345,25 +356,29 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 		hienThiThongTinClick(row, col);
 
 	}
+
 	@Override
 	public void mousePressed(MouseEvent e) {
 
 	}
+
 	@Override
 	public void mouseReleased(MouseEvent e) {
 
 	}
+
 	@Override
 	public void mouseEntered(MouseEvent e) {
 
 	}
+
 	@Override
 	public void mouseExited(MouseEvent e) {
 
 	}
 	//
-	
-	//Reload
+
+	// Reload
 	private void huy() {
 		ngayLam.setDate(null);
 		cbCaLam.setSelectedIndex(-1);
@@ -372,6 +387,7 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 		loadNhanVien();
 		loadCaLamViec();
 	}
+
 	// Tìm các nhân ca trống ca đã chọn
 	private void timNhanVienTrongCa() {
 		if (ngayLam.getDate() == null) {
@@ -541,7 +557,7 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 		LocalDate ngay = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 		try {
 			// Lấy mã ca từ tên ca
-			ArrayList<CaLamViec> ca = caLamDAO.timCaLamViecTheoTen(tenCa);
+			List<CaLamViec> ca = caLamDAO.timCaLamViecTheoTen(tenCa);
 			String maCa = ca.get(0).getMaCa();
 
 			// Lấy danh sách LichLamViec tương ứng
@@ -583,7 +599,7 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 			JOptionPane.showMessageDialog(this, "Lỗi hệ thống: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
 		}
 	}
-	
+
 	private void hienThiThongTinClick(int row, int col) {
 		try {
 			DefaultTableModel model = (DefaultTableModel) tableLich.getModel();
@@ -605,13 +621,19 @@ public class PhanCaLam extends JPanel implements ActionListener, MouseListener {
 			}
 
 			// Lấy danh sách LichLamViec thực tế từ DB
-			ArrayList<CaLamViec> ca = caLamDAO.timCaLamViecTheoTen(tenCa);
+			List<CaLamViec> ca = caLamDAO.timCaLamViecTheoTen(tenCa);
 			String maCa = ca.get(0).getMaCa();
 			List<LichLamViec> dsLich = lichLamDAO.layLichLamViecTheoCaVaNgay(maCa, ngay);
 
 			// Hiển thị danh sách nhân viên
 			modelDaChon.clear();
+			modelAll.clear();
 
+			// Hiển thị nhân viên đã được chọn
+			for (LichLamViec llv : dsLich) {
+				NhanVien nv = llv.getNhanVien();
+				modelDaChon.addElement(nv.getMaNV() + " - " + nv.getHoTen());
+			}
 			// Làm mới danh sách nhân viên còn lại
 			List<NhanVien> allNV = nhanVienDAO.layDanhSachNhanVien();
 			modelAll.clear();
